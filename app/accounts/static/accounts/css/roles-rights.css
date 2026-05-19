@@ -1,0 +1,56 @@
+/* Таблица страницы "Роли и права" */
+
+.rights-table-wrap {
+    margin-top: 28px;
+    overflow-x: auto;
+    border: 1px solid rgba(88, 117, 163, 0.45);
+    border-radius: 22px;
+    background: rgba(9, 17, 33, 0.55);
+}
+
+.rights-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #f4f7ff;
+}
+
+.rights-table th,
+.rights-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(88, 117, 163, 0.35);
+    text-align: left;
+}
+
+.rights-table th {
+    color: #cfe0ff;
+    font-size: 14px;
+    font-weight: 800;
+    background: rgba(18, 31, 54, 0.9);
+}
+
+.rights-table tr:last-child td {
+    border-bottom: none;
+}
+
+.rights-check-cell {
+    text-align: center;
+}
+
+.rights-check-cell input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    accent-color: #ff7f1a;
+    cursor: pointer;
+}
+
+.messages-box {
+    margin: 18px 0;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 127, 26, 0.14);
+    border: 1px solid rgba(255, 127, 26, 0.45);
+    color: #ffe1c2;
+}

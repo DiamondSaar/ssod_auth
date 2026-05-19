@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}
+Панель управления — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+<section class="admin-shell">
+
+    <div class="admin-header">
+        <div>
+            <div class="hero-badge">
+                Панель управления
+            </div>
+
+            <h1 class="admin-title">
+                ССОД Auth Center
+            </h1>
+
+            <p class="admin-subtitle">
+                Управление пользователями, организациями, доступами,
+                ролями и ключами доступа ССОД.
+            </p>
+        </div>
+
+        <a class="button secondary" href="/">
+            На главную
+        </a>
+    </div>
+
+    <div class="admin-grid">
+        {% for card in cards %}
+            <a class="admin-card" href="{{ card.url }}">
+                <h2>{{ card.title }}</h2>
+                <p>{{ card.description }}</p>
+            </a>
+        {% endfor %}
+    </div>
+
+</section>
+{% endblock %}

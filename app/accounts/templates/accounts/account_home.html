@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}
+Личный кабинет — ССОД Auth Center
+{% endblock %}
+
+{% block main_class %}
+account-page
+{% endblock %}
+
+{% block content %}
+
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">
+        Личный кабинет
+    </div>
+
+    <h1 class="admin-title">
+        Рабочая область
+    </h1>
+
+    <p class="admin-subtitle">
+        Здесь будут отображаться доступные продукты, ключи доступа ССОД,
+        профиль пользователя, заявки и уведомления.
+    </p>
+
+    <div class="admin-grid">
+
+        <a class="admin-card" href="{% url 'accounts:account_products' %}">
+            <h2>Мои продукты</h2>
+            <p>
+                Доступные сервисы и продукты экосистемы ССОД.
+            </p>
+        </a>
+
+        <a class="admin-card" href="{% url 'accounts:security' %}">
+            <h2>Безопасность</h2>
+            <p>Passkey, устройства входа и ключи доступа ССОД.</p>
+        </a>
+        <a class="admin-card" href="#">
+            <h2>Мои заявки</h2>
+            <p>Создание и просмотр заявок.</p>
+        </a>
+
+        <a class="admin-card" href="{% url 'accounts:security' %}">
+            <h2>Безопасность</h2>
+            <p>Passkey, устройства входа и настройки безопасности.</p>
+        </a>
+
+
+    </div>
+
+    <div class="account-actions-row">
+        {% if request.user.is_staff %}
+            <a class="button primary" href="/manage/">
+                Панель управления
+            </a>
+        {% endif %}
+
+        <form method="post" action="/account/logout/" class="inline-form">
+            {% csrf_token %}
+            <button class="button secondary" type="submit">
+                Выйти
+            </button>
+        </form>
+    </div>
+
+</section>
+
+{% endblock %}

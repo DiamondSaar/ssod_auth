@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Ключи доступа — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Ключи доступа</div>
+
+    <h1 class="admin-title">API-ключи ССОД</h1>
+
+    <p class="admin-subtitle">
+        Здесь отображаются технические ключи для API, интеграций и сервисов.
+        Для входа без пароля используйте Passkey в разделе безопасности.
+    </p>
+
+    <div class="account-actions-row">
+        <a class="button primary" href="{% url 'accounts:access_key_create' %}">
+            Выпустить ключ
+        </a>
+
+        <a class="button secondary" href="{% url 'accounts:account_home' %}">
+            Назад в ЛК
+        </a>
+    </div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Fingerprint</th>
+                    <th>Статус</th>
+                    <th>Выпущен</th>
+                    <th>Последнее использование</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for key in keys %}
+                    <tr>
+                        <td>{{ key.name }}</td>
+                        <td><code>{{ key.fingerprint_sha256|slice:":24" }}...</code></td>
+                        <td>{{ key.get_status_display }}</td>
+                        <td>{{ key.issued_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            {% if key.last_used_at %}
+                                {{ key.last_used_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if key.status == "active" %}
+                                <form method="post" action="{% url 'accounts:access_key_revoke' key.uuid %}" class="inline-form">
+                                    {% csrf_token %}
+                                    <button class="button secondary" type="submit">
+                                        Отозвать
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">Ключи пока не выпущены.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+{% endblock %}

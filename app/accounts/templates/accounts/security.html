@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+Безопасность — ССОД Auth Center
+{% endblock %}
+
+{% block main_class %}
+account-page
+{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">
+        Безопасность
+    </div>
+
+    <h1 class="admin-title">
+        Passkey и устройства входа
+    </h1>
+
+    <p class="admin-subtitle">
+        Passkey позволяет входить без пароля с помощью Windows Hello,
+        PIN-кода устройства, биометрии или аппаратного ключа.
+    </p>
+
+    <div class="account-actions-row">
+        <button
+            class="button primary"
+            type="button"
+            id="passkey-register-button"
+        >
+            Добавить passkey
+        </button>
+
+        <a class="button secondary" href="{% url 'accounts:access_key_list' %}">
+            API-ключи ССОД
+        </a>
+
+        <a class="button secondary" href="{% url 'accounts:account_home' %}">
+            Назад в ЛК
+        </a>
+    </div>
+
+    <div id="passkey-status" class="passkey-status"></div>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Подтвержден</th>
+                    <th>Создан</th>
+                    <th>Последнее использование</th>
+                    <th>Discoverable</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for credential in credentials %}
+                    <tr>
+                        <td>
+                            {{ credential.name|default:"Passkey" }}
+                        </td>
+
+                        <td>
+                            {% if credential.confirmed %}
+                                <span class="status-pill active">Да</span>
+                            {% else %}
+                                <span class="status-pill neutral">Нет</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ credential.created_at|date:"d.m.Y H:i" }}
+                        </td>
+
+                        <td>
+                            {% if credential.last_used_at %}
+                                {{ credential.last_used_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if credential.discoverable %}
+                                Да
+                            {% else %}
+                                Нет
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            Passkey пока не добавлены.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+<script src="{% static 'ssod_auth/js/passkeys.js' %}"></script>
+{% endblock %}

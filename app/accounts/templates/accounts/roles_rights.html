@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Роли и права — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">
+        Администрирование
+    </div>
+
+    <h1 class="admin-title">
+        Роли и права
+    </h1>
+
+    <p class="admin-subtitle">
+        Управление доступом пользователей к продуктам экосистемы ССОД.
+    </p>
+
+    {% if messages %}
+        <div class="messages-box">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="rights-table-wrap">
+            <table class="rights-table">
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>ФИО</th>
+
+                        {% for product in products %}
+                            <th>{{ product.name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                {{ user.last_name }} {{ user.first_name }}
+                            </td>
+
+                            {% for product in products %}
+                                <td class="rights-check-cell">
+                                    {% with user_id_str=user.id|stringformat:"s" product_id_str=product.id|stringformat:"s" %}
+                                        {% with access_key=user_id_str|add:"_"|add:product_id_str %}
+                                            <input
+                                                type="checkbox"
+                                                name="access_{{ user.id }}_{{ product.id }}"
+                                                {% if access_key in active_access_keys %}
+                                                    checked
+                                                {% endif %}
+                                            >
+                                        {% endwith %}
+                                    {% endwith %}
+
+
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="account-actions-row">
+            <button class="button primary" type="submit">
+                Сохранить права
+            </button>
+
+            <a class="button secondary" href="/account/">
+                Назад в ЛК
+            </a>
+        </div>
+
+    </form>
+
+</section>
+<link rel="stylesheet" href="{% static 'accounts/css/roles-rights.css' %}">
+{% endblock %}

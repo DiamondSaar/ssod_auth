@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Ключ создан — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Ключ создан</div>
+
+    <h1 class="admin-title">Сохраните ключ</h1>
+
+    <p class="admin-subtitle">
+        Этот секрет отображается только сейчас. После ухода со страницы восстановить его будет невозможно.
+    </p>
+
+    <div class="form-card">
+        <div class="form-field">
+            <label>Ключ доступа</label>
+            <textarea class="form-input form-textarea" rows="4" readonly>{{ generated_secret }}</textarea>
+        </div>
+
+        <div class="form-field">
+            <label>SHA256 fingerprint</label>
+            <input class="form-input" value="{{ fingerprint }}" readonly>
+        </div>
+
+        <div class="form-actions">
+            <a class="button primary" href="{% url 'accounts:access_key_list' %}">
+                К списку ключей
+            </a>
+        </div>
+    </div>
+
+</section>
+{% endblock %}

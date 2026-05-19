@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Вход — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+<section class="login-card">
+
+    <div class="hero-badge">
+        Вход в ЛК
+    </div>
+
+    <h1 class="login-title">
+        Личный кабинет ССОД
+    </h1>
+
+    <p class="login-subtitle">
+        Используйте логин и временный пароль из письма.
+        После первого входа пароль нужно будет заменить.
+    </p>
+
+    {% if form.errors %}
+        <div class="form-errors">
+            Неверный логин или пароль.
+        </div>
+    {% endif %}
+
+    <form method="post" class="login-form">
+        {% csrf_token %}
+
+        <div class="form-field">
+            <label for="{{ form.username.id_for_label }}">
+                Логин
+            </label>
+            {{ form.username }}
+        </div>
+
+        <div class="form-field">
+            <label for="{{ form.password.id_for_label }}">
+                Пароль
+            </label>
+            {{ form.password }}
+        </div>
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">
+                Войти
+            </button>
+        <div class="form-actions">
+            <button class="button secondary" type="button" id="passkey-login-button">
+                Войти с passkey
+            </button>
+        </div>
+
+        <div id="passkey-login-status" class="passkey-status"></div>
+
+        <script src="{% static 'ssod_auth/js/passkey-login.js' %}"></script>
+
+            <a class="button secondary" href="/">
+                Назад
+            </a>
+        </div>
+    </form>
+
+</section>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}
+Пользователи — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+<section class="admin-shell">
+
+    <div class="admin-header">
+        <div>
+            <div class="hero-badge">
+                Пользователи
+            </div>
+
+            <h1 class="admin-title">
+                Учет пользователей
+            </h1>
+
+            <p class="admin-subtitle">
+                Список учетных записей, статусов, классов доступа,
+                организаций и ключей доступа ССОД.
+            </p>
+        </div>
+
+        <div class="admin-actions">
+            <a class="button secondary" href="/manage/">
+                Назад
+            </a>
+
+            <a class="button primary" href="{% url 'control:user_create' %}">
+                Добавить пользователя
+            </a>
+
+        </div>
+    </div>
+
+    <form class="filter-panel" method="get">
+        <div class="filter-field">
+            <label for="q">Поиск</label>
+            <input
+                id="q"
+                name="q"
+                type="text"
+                value="{{ query }}"
+                placeholder="ФИО или логин"
+            >
+        </div>
+
+        <div class="filter-field">
+            <label for="status">Статус</label>
+            <select id="status" name="status">
+                <option value="">Все</option>
+                <option value="active" {% if status == "active" %}selected{% endif %}>
+                    Активные
+                </option>
+                <option value="blocked" {% if status == "blocked" %}selected{% endif %}>
+                    Заблокированные
+                </option>
+            </select>
+        </div>
+
+        <div class="filter-field">
+            <label for="access_class">Класс доступа</label>
+            <select id="access_class" name="access_class">
+                <option value="">Все</option>
+                {% for value, label in access_classes %}
+                    <option value="{{ value }}" {% if access_class == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button class="button primary" type="submit">
+                Применить
+            </button>
+
+            <a class="button secondary" href="/manage/users/">
+                Сбросить
+            </a>
+        </div>
+    </form>
+
+    <div class="table-card">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Логин</th>
+                    <th>Организация</th>
+                    <th>Должность</th>
+                    <th>Класс</th>
+                    <th>Статус</th>
+                    <th>Последний вход</th>
+                    <th>Ключ ССОД</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>
+                            <strong>
+                                {{ user.full_name_ru|default:"—" }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ user.username }}
+                        </td>
+
+                        <td>
+                            {% if user.organization %}
+                                {{ user.organization.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if user.position %}
+                                {{ user.position.name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge">
+                                {{ user.access_class }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if user.is_active %}
+                                <span class="status-pill active">Активен</span>
+                            {% else %}
+                                <span class="status-pill blocked">Заблокирован</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"d.m.Y H:i" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if user.has_active_ssod_key %}
+                                <span class="status-pill active">Есть</span>
+                            {% else %}
+                                <span class="status-pill neutral">Нет</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="table-actions">
+                            <a href="#">
+                                Открыть
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="empty-row">
+                            Пользователи не найдены.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+{% endblock %}

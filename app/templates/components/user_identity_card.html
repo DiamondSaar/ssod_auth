@@ -1,0 +1,37 @@
+<div class="user-identity-card">
+
+    <div class="user-identity-photo">
+        <div class="user-identity-avatar">
+            {{ request.user.first_name|first }}{{ request.user.middle_name|first }}
+        </div>
+    </div>
+
+    <div class="user-identity-main">
+
+        <div class="user-identity-top">
+            <div class="user-identity-empty">
+                <!-- Резервное место под будущие данные/статус/иконку -->
+            </div>
+
+            <div class="user-identity-access">
+                <div class="user-identity-access-letter">
+                    {{ request.user.access_class }}
+                </div>
+            </div>
+        </div>
+
+        <div class="user-identity-line">
+            <div class="user-identity-value">
+                {{ request.user.last_name }} {{ request.user.first_name|first }}.{{ request.user.middle_name|first }}.
+            </div>
+        </div>
+
+        <div class="user-identity-line">
+            <div class="user-identity-value">
+                {{ request.user.username }}
+            </div>
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Мои продукты — ССОД Auth Center{% endblock %}
+
+{% block content %}
+
+<section class="account-products-page">
+
+    <!--
+        Заголовок страницы.
+
+        Это пользовательская страница.
+        Здесь не показываем админские настройки, роли, таблицы прав и прочую мясорубку.
+        Только понятные карточки продуктов.
+    -->
+    <div class="account-products-header">
+        <div>
+            <div class="page-pill">Личный кабинет</div>
+            <h1>Мои продукты</h1>
+            <p>
+                Доступные сервисы и продукты экосистемы ССОД.
+            </p>
+        </div>
+    </div>
+
+    <!--
+        Сетка карточек продуктов.
+
+        Каждая карточка похожа по логике на карточку пользователя:
+        слева логотип, справа поля, сверху справа статус доступа.
+    -->
+    <div class="product-card-grid">
+
+        {% for item in product_cards %}
+            {% with product=item.product is_allowed=item.is_allowed %}
+
+                <div
+                    class="product-card {% if not is_allowed %}product-card-disabled{% endif %}"
+                    {% if is_allowed %}
+                        onclick="window.location.href='{{ product.product_url }}'"
+                    {% else %}
+                        onclick="showProductAccessDenied('{{ product.name|escapejs }}')"
+                    {% endif %}
+                    role="button"
+                    tabindex="0"
+                >
+
+                    <!-- Логотип продукта -->
+                    <div class="product-card-logo-wrap">
+                        {% if product.logo %}
+                            <img
+                                src="{{ product.logo.url }}"
+                                alt="{{ product.name }}"
+                                class="product-card-logo"
+                            >
+                        {% else %}
+                            <!--
+                                Если логотип еще не загружен,
+                                показываем короткую текстовую заглушку.
+                            -->
+                            <div class="product-card-logo-placeholder">
+                                {{ product.name|slice:":2" }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Основная информация по продукту -->
+                    <div class="product-card-info">
+
+                        <div class="product-card-field product-card-title">
+                            {{ product.name }}
+                        </div>
+
+                        <div class="product-card-field">
+                            {{ product.short_description }}
+                        </div>
+
+                        <div class="product-card-field">
+                            {{ product.second_line|default:"Продукт экосистемы ССОД" }}
+                        </div>
+
+                    </div>
+
+                    <!--
+                        Статус доступа.
+
+                        Закрашенный оранжевый кружок = доступ есть.
+                        Пустой кружок = доступа нет.
+
+                        Специально ставим сверху справа,
+                        по аналогии с уровнем доступа в карточке пользователя.
+                    -->
+                    <div
+                        class="product-access-dot {% if is_allowed %}product-access-dot-active{% endif %}"
+                        title="{% if is_allowed %}Доступ разрешен{% else %}Доступ отсутствует{% endif %}"
+                    ></div>
+
+                </div>
+
+            {% endwith %}
+        {% empty %}
+
+            <div class="empty-products-box">
+                Продукты пока не добавлены.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+<script src="{% static 'accounts/js/account-products.js' %}"></script>
+
+{% endblock %}

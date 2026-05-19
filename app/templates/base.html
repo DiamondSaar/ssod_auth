@@ -1,0 +1,20 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}ССОД Auth Center{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{% static 'accounts/css/account-products.css' %}">
+    <!-- Общий CSS проекта. Все стили держим отдельно, не размазываем по HTML. -->
+    <link rel="stylesheet" href="{% static 'ssod_auth/css/app.css' %}">
+</head>
+<body>
+    <main class="{% block main_class %}auth-page{% endblock %}">
+         {% block content %}{% endblock %}
+    </main>
+
+    <!-- Общий JS проекта. Пока почти пустой, но структура уже правильная. -->
+    <script src="{% static 'ssod_auth/js/app.js' %}"></script>
+</body>
+</html>
