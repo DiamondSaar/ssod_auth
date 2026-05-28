@@ -361,3 +361,123 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Дата рождения под аватаром */
+.uc-birthdate {
+    margin-top: 12px;
+    width: 100%;
+    text-align: center;
+}
+
+.uc-birthdate-val {
+    font-size: 14px;
+    color: #f4f7ff;
+    margin-top: 4px;
+}
+
+/* Контакты */
+.uc-contacts-section {
+    margin-bottom: 16px;
+}
+
+.uc-contacts-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8aa3cc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.uc-contact-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.uc-contact-main {
+    padding: 8px 12px;
+    border: 1px solid rgba(88, 117, 163, 0.35);
+    border-radius: 10px;
+    background: rgba(9, 17, 33, 0.38);
+    color: #f4f7ff;
+    font-size: 14px;
+}
+
+.uc-contact-note {
+    padding: 8px 12px;
+    border: 1px solid rgba(88, 117, 163, 0.25);
+    border-radius: 10px;
+    background: rgba(9, 17, 33, 0.2);
+    color: #8aa3cc;
+    font-size: 13px;
+}
+
+.uc-contact-empty {
+    color: #8aa3cc;
+    font-size: 14px;
+    padding: 4px 0;
+}
+
+.uc-contact-input {
+    width: 100%;
+}
+
+.uc-contact-note-input {
+    width: 100%;
+}
+
+.uc-phone-wrap {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 6px;
+}
+
+.uc-phone-code {
+    width: 100%;
+}
+
+.uc-add-btn {
+    background: none;
+    border: 1px dashed rgba(88, 117, 163, 0.45);
+    border-radius: 10px;
+    color: #8aa3cc;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 4px;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.uc-add-btn:hover {
+    border-color: #ff7f1a;
+    color: #ff7f1a;
+}
+
+
+.uc-contact-note-wrap {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.uc-remove-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 8px;
+    color: #f87171;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.uc-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+}

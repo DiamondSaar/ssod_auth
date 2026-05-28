@@ -455,29 +455,3 @@
     border-color: #ff7f1a;
     color: #ff7f1a;
 }
-
-
-.uc-contact-note-wrap {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-
-.uc-remove-btn {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 8px;
-    color: #f87171;
-    width: 30px;
-    height: 30px;
-    cursor: pointer;
-    font-size: 12px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.uc-remove-btn:hover {
-    background: rgba(239, 68, 68, 0.3);
-}

@@ -16,15 +16,22 @@
         </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" id="user-card-form">
         {% csrf_token %}
-
-        <!-- ======================================================
-             ВЕРХНИЙ БЛОК: аватар / основные поля / статус
-        ====================================================== -->
+        <button type="submit" name="_save" style="display:none" id="hidden-submit"></button>
+        {% if form.errors %}
+            <div class="messages-box">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <div class="message">{{ field }}: {{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <!-- ВЕРХНИЙ БЛОК -->
         <div class="uc-top">
 
-            <!-- Левая колонка: аватар -->
+            <!-- Аватар + дата рождения -->
             <div class="uc-avatar-col">
                 <div class="uc-avatar-wrap" {% if edit_mode %}onclick="document.getElementById('id_avatar').click()"{% endif %}>
                     {% if viewed_user.avatar %}
@@ -41,146 +48,124 @@
                 {% if edit_mode %}
                     <input type="file" id="id_avatar" name="avatar" accept="image/*" class="uc-avatar-input" onchange="previewAvatar(this)">
                 {% endif %}
+
+                <!-- Дата рождения под аватаром -->
+                <div class="uc-birthdate">
+                    {% if edit_mode %}
+                        <label class="uc-field-lbl">Дата рождения</label>
+                        {{ form.birth_date }}
+                    {% else %}
+                        <div class="uc-field-lbl">Дата рождения</div>
+                        <div class="uc-birthdate-val">
+                            {{ viewed_user.birth_date|date:"d.m.Y"|default:"—" }}
+                        </div>
+                    {% endif %}
+                </div>
             </div>
 
-            <!-- Центральная колонка: ФИО, организация, логин, пароль -->
+            <!-- Центральная колонка -->
             <div class="uc-main-col">
 
                 <!-- ФИО -->
-                <div class="uc-field-row">
-                    {% if edit_mode %}
-                        <div class="uc-field-group uc-field-trio">
-                            <div class="uc-field">
-                                <label>Фамилия</label>
-                                {{ form.last_name }}
-                            </div>
-                            <div class="uc-field">
-                                <label>Имя</label>
-                                {{ form.first_name }}
-                            </div>
-                            <div class="uc-field">
-                                <label>Отчество</label>
-                                {{ form.middle_name }}
-                            </div>
+                {% if edit_mode %}
+                    <div class="uc-field-group uc-field-trio">
+                        <div class="uc-field">
+                            <label>Фамилия</label>{{ form.last_name }}
                         </div>
-                    {% else %}
-                        <div class="uc-field-display uc-field-fio">
-                            {{ viewed_user.full_name_ru|default:"—" }}
+                        <div class="uc-field">
+                            <label>Имя</label>{{ form.first_name }}
                         </div>
-                    {% endif %}
-                </div>
+                        <div class="uc-field">
+                            <label>Отчество</label>{{ form.middle_name }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="uc-field-display uc-field-fio">
+                        {{ viewed_user.full_name_ru|default:"—" }}
+                    </div>
+                {% endif %}
 
                 <!-- Организация -->
-                <div class="uc-field-row">
-                    {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Организация</label>
-                            {{ form.organization }}
-                        </div>
-                    {% else %}
-                        <div class="uc-field-display">
-                            {{ viewed_user.organization.name|default:"—" }}
-                        </div>
-                    {% endif %}
-                </div>
+                {% if edit_mode %}
+                    <div class="uc-field">
+                        <label>Организация</label>{{ form.organization }}
+                    </div>
+                {% else %}
+                    <div class="uc-field-display">
+                        {{ viewed_user.organization.name|default:"—" }}
+                    </div>
+                {% endif %}
 
                 <!-- Логин + Дата регистрации -->
-                <div class="uc-field-row uc-field-row-half">
+                <div class="uc-field-row-half">
                     {% if edit_mode %}
                         <div class="uc-field">
-                            <label>Логин</label>
-                            {{ form.username }}
+                            <label>Логин</label>{{ form.username }}
                         </div>
                     {% else %}
-                        <div class="uc-field-display">
-                            {{ viewed_user.username }}
-                        </div>
+                        <div class="uc-field-display">{{ viewed_user.username }}</div>
                     {% endif %}
                     <div class="uc-field-display uc-field-muted">
                         Зарегистрирован: {{ viewed_user.date_joined|date:"d.m.Y" }}
                     </div>
                 </div>
 
-                <!-- Пароль + кнопка сброса -->
-                <div class="uc-field-row uc-field-row-half">
-                    <div class="uc-field-display uc-field-password">
-                        ••••••••••••
-                    </div>
-                    {% if not viewed_user.pk is None %}
-                        <form method="post" class="uc-inline-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="reset_password">
-                            <button type="submit" class="button secondary uc-btn-reset"
-                                onclick="return confirm('Сбросить пароль и отправить новый на почту?')">
-                                Сбросить пароль
-                            </button>
-                        </form>
-                    {% endif %}
+                <!-- Пароль + сброс -->
+                <div class="uc-field-row-half">
+                    <div class="uc-field-display uc-field-password">••••••••••••</div>
+                        <button type="button" class="button secondary uc-btn-reset"
+                            onclick="resetPassword('{% url 'control:user_detail' uuid=viewed_user.uuid %}')">
+                            Сбросить пароль
+                        </button>
                 </div>
 
             </div>
 
-            <!-- Правая колонка: уровень доступа + статус -->
+            <!-- Правая колонка: уровень + статус -->
             <div class="uc-status-col">
-
                 <div class="uc-access-badge">
-                    {% if edit_mode %}
-                        {{ form.access_class }}
-                    {% else %}
-                        <div class="uc-access-letter">{{ viewed_user.access_class }}</div>
-                        <div class="uc-access-label">Уровень доступа</div>
-                    {% endif %}
+                    <div class="uc-access-letter">{{ viewed_user.access_class }}</div>
+                    <div class="uc-access-label">Уровень доступа</div>
                 </div>
-
                 <div class="uc-status-badge {% if viewed_user.is_active %}uc-status-active{% else %}uc-status-blocked{% endif %}">
                     {% if edit_mode %}
                         <label class="uc-checkbox-label">
                             {{ form.is_active }} Активен
                         </label>
                     {% else %}
-                        {% if viewed_user.is_active %}
-                            Активен
-                        {% else %}
-                            Заблокирован
-                        {% endif %}
+                        {% if viewed_user.is_active %}Активен{% else %}Заблокирован{% endif %}
                     {% endif %}
                 </div>
-
+                {% if edit_mode %}
+                    <div class="uc-field">
+                        <label class="uc-field-lbl">Класс доступа</label>
+                        {{ form.access_class }}
+                    </div>
+                {% endif %}
             </div>
 
         </div>
 
-        <!-- ======================================================
-             СРЕДНИЙ БЛОК: доп. поля слева / продукты справа
-        ====================================================== -->
+        <!-- СРЕДНИЙ БЛОК -->
         <div class="uc-middle">
 
             <!-- Левая часть -->
             <div class="uc-left-col">
 
-                <!-- Должность -->
-                <div class="uc-field-row">
+                <!-- Должность + Роль в одну строку -->
+                <div class="uc-field-row-half">
                     {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Должность</label>
-                            {{ form.position }}
+                        <div class="uc-field">
+                            <label>Должность</label>{{ form.position }}
+                        </div>
+                        <div class="uc-field">
+                            <label>Роль в системе</label>{{ form.system_role }}
                         </div>
                     {% else %}
                         <div class="uc-field-labeled">
                             <span class="uc-field-lbl">Должность</span>
                             <span class="uc-field-val">{{ viewed_user.position.name|default:"—" }}</span>
                         </div>
-                    {% endif %}
-                </div>
-
-                <!-- Роль в системе -->
-                <div class="uc-field-row">
-                    {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Роль в системе</label>
-                            {{ form.system_role }}
-                        </div>
-                    {% else %}
                         <div class="uc-field-labeled">
                             <span class="uc-field-lbl">Роль в системе</span>
                             <span class="uc-field-val">{{ viewed_user.system_role.name|default:"—" }}</span>
@@ -188,81 +173,152 @@
                     {% endif %}
                 </div>
 
-                <!-- Email -->
-                <div class="uc-field-row">
+<!-- Почты -->
+                <div class="uc-contacts-section">
+                    <div class="uc-contacts-title">Почта</div>
                     {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Email</label>
-                            {{ form.email }}
-                        </div>
-                    {% else %}
-                        <div class="uc-field-labeled">
-                            <span class="uc-field-lbl">Email</span>
-                            <span class="uc-field-val">{{ viewed_user.email|default:"—" }}</span>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Дата рождения -->
-                <div class="uc-field-row">
-                    {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Дата рождения</label>
-                            {{ form.birth_date }}
-                        </div>
-                    {% else %}
-                        <div class="uc-field-labeled">
-                            <span class="uc-field-lbl">Дата рождения</span>
-                            <span class="uc-field-val">
-                                {{ viewed_user.birth_date|date:"d.m.Y"|default:"—" }}
-                            </span>
-                        </div>
-                    {% endif %}
-                </div>
-
-                <!-- Комментарий для пользователя -->
-                <div class="uc-field-row">
-                    {% if edit_mode %}
-                        <div class="uc-field uc-field-full">
-                            <label>Комментарий для пользователя</label>
-                            {{ form.public_comment }}
-                        </div>
-                    {% else %}
-                        {% if viewed_user.public_comment %}
-                            <div class="uc-field-labeled">
-                                <span class="uc-field-lbl">Комментарий</span>
-                                <span class="uc-field-val">{{ viewed_user.public_comment }}</span>
-                            </div>
-                        {% endif %}
-                    {% endif %}
-                </div>
-
-                <!-- Комментарий администратора (только для staff) -->
-                {% if request.user.is_staff %}
-                    <div class="uc-field-row">
-                        {% if edit_mode %}
-                            <div class="uc-field uc-field-full">
-                                <label>Комментарий администратора</label>
-                                {{ form.admin_comment }}
-                            </div>
-                        {% else %}
-                            {% if viewed_user.admin_comment %}
-                                <div class="uc-field-labeled uc-field-admin">
-                                    <span class="uc-field-lbl">Заметка (admin)</span>
-                                    <span class="uc-field-val">{{ viewed_user.admin_comment }}</span>
+                        <div id="emails-container">
+                            {% if viewed_user.emails.all %}
+                                {% for email in viewed_user.emails.all %}
+                                    <div class="uc-contact-row" id="email-row-{{ forloop.counter0 }}">
+                                        <input type="email" name="email_{{ forloop.counter0 }}"
+                                            class="form-input uc-contact-input"
+                                            placeholder="email@example.com"
+                                            value="{{ email.email }}">
+                                        <div class="uc-contact-note-wrap">
+                                            <input type="text" name="email_comment_{{ forloop.counter0 }}"
+                                                class="form-input uc-contact-note-input"
+                                                placeholder="Комментарий"
+                                                value="{{ email.comment }}">
+                                            {% if forloop.counter0 > 0 %}
+                                                <button type="button" class="uc-remove-btn"
+                                                    onclick="removeRow('email-row-{{ forloop.counter0 }}', 'email')">✕</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="uc-contact-row" id="email-row-0">
+                                    <input type="email" name="email_0"
+                                        class="form-input uc-contact-input"
+                                        placeholder="email@example.com">
+                                    <div class="uc-contact-note-wrap">
+                                        <input type="text" name="email_comment_0"
+                                            class="form-input uc-contact-note-input"
+                                            placeholder="Рабочая">
+                                    </div>
                                 </div>
                             {% endif %}
-                        {% endif %}
+                        </div>
+                        <button type="button" class="uc-add-btn" onclick="addEmailRow()">
+                            + Добавить почту
+                        </button>
+                    {% else %}
+                        {% for email in viewed_user.emails.all %}
+                            <div class="uc-contact-row">
+                                <div class="uc-contact-main">{{ email.email }}</div>
+                                <div class="uc-contact-note">{{ email.comment|default:"—" }}</div>
+                            </div>
+                        {% empty %}
+                            <div class="uc-contact-empty">Не указана</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+<!-- Телефоны -->
+                <div class="uc-contacts-section">
+                    <div class="uc-contacts-title">Телефон</div>
+                    {% if edit_mode %}
+                        <div id="phones-container">
+                            {% if viewed_user.phones.all %}
+                                {% for phone in viewed_user.phones.all %}
+                                    <div class="uc-contact-row" id="phone-row-{{ forloop.counter0 }}">
+                                        <div class="uc-phone-wrap">
+                                            <input type="text" name="phone_code_{{ forloop.counter0 }}"
+                                                class="form-input uc-phone-code"
+                                                placeholder="+7"
+                                                value="{{ phone.country_code }}">
+                                            <input type="text" name="phone_{{ forloop.counter0 }}"
+                                                class="form-input uc-contact-input"
+                                                placeholder="9036709699"
+                                                value="{{ phone.number }}">
+                                        </div>
+                                        <div class="uc-contact-note-wrap">
+                                            <input type="text" name="phone_comment_{{ forloop.counter0 }}"
+                                                class="form-input uc-contact-note-input"
+                                                placeholder="Комментарий"
+                                                value="{{ phone.comment }}">
+                                            {% if forloop.counter0 > 0 %}
+                                                <button type="button" class="uc-remove-btn"
+                                                    onclick="removeRow('phone-row-{{ forloop.counter0 }}', 'phone')">✕</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="uc-contact-row" id="phone-row-0">
+                                    <div class="uc-phone-wrap">
+                                        <input type="text" name="phone_code_0"
+                                            class="form-input uc-phone-code"
+                                            placeholder="+7" value="+7">
+                                        <input type="text" name="phone_0"
+                                            class="form-input uc-contact-input"
+                                            placeholder="9036709699">
+                                    </div>
+                                    <div class="uc-contact-note-wrap">
+                                        <input type="text" name="phone_comment_0"
+                                            class="form-input uc-contact-note-input"
+                                            placeholder="Рабочий">
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <button type="button" class="uc-add-btn" onclick="addPhoneRow()">
+                            + Добавить телефон
+                        </button>
+                    {% else %}
+                        {% for phone in viewed_user.phones.all %}
+                            <div class="uc-contact-row">
+                                <div class="uc-contact-main">{{ phone.country_code }} {{ phone.number }}</div>
+                                <div class="uc-contact-note">{{ phone.comment|default:"—" }}</div>
+                            </div>
+                        {% empty %}
+                            <div class="uc-contact-empty">Не указан</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <!-- Комментарии -->
+                {% if edit_mode %}
+                    <div class="uc-field">
+                        <label>Комментарий для пользователя</label>
+                        {{ form.public_comment }}
                     </div>
+                    {% if request.user.is_staff %}
+                        <div class="uc-field">
+                            <label>Комментарий администратора</label>
+                            {{ form.admin_comment }}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    {% if viewed_user.public_comment %}
+                        <div class="uc-field-labeled">
+                            <span class="uc-field-lbl">Комментарий</span>
+                            <span class="uc-field-val">{{ viewed_user.public_comment }}</span>
+                        </div>
+                    {% endif %}
+                    {% if request.user.is_staff and viewed_user.admin_comment %}
+                        <div class="uc-field-labeled uc-field-admin">
+                            <span class="uc-field-lbl">Заметка (admin)</span>
+                            <span class="uc-field-val">{{ viewed_user.admin_comment }}</span>
+                        </div>
+                    {% endif %}
                 {% endif %}
 
             </div>
 
-            <!-- Правая часть: таблица продуктов -->
+            <!-- Правая часть: продукты -->
             <div class="uc-right-col">
-
                 <div class="uc-products-title">Доступ к продуктам</div>
-
                 <div class="uc-products-table-wrap">
                     <table class="uc-products-table">
                         <thead>
@@ -278,53 +334,109 @@
                                 <tr>
                                     <td>{{ row.product.name }}</td>
                                     <td>
-                                        <div class="uc-product-dot {% if row.is_active %}uc-product-dot-active{% endif %}"
-                                             title="{% if row.is_active %}Активен{% else %}Нет доступа{% endif %}">
-                                        </div>
+                                        <div class="uc-product-dot {% if row.is_active %}uc-product-dot-active{% endif %}"></div>
                                     </td>
-                                    <td>
-                                        {% if row.access %}
-                                            {{ row.access.valid_from|date:"d.m.Y" }}
-                                        {% else %}—{% endif %}
-                                    </td>
-                                    <td>
-                                        {% if row.access and row.access.valid_to %}
-                                            {{ row.access.valid_to|date:"d.m.Y" }}
-                                        {% else %}—{% endif %}
-                                    </td>
+                                    <td>{% if row.access %}{{ row.access.valid_from|date:"d.m.Y" }}{% else %}—{% endif %}</td>
+                                    <td>{% if row.access and row.access.valid_to %}{{ row.access.valid_to|date:"d.m.Y" }}{% else %}—{% endif %}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-
             </div>
 
         </div>
 
-        <!-- ======================================================
-             КНОПКИ ВНИЗУ
-        ====================================================== -->
+        <!-- КНОПКИ -->
         <div class="uc-actions">
-            <a class="button secondary" href="{% url 'control:user_list' %}">
-                К списку
-            </a>
-
+            <a class="button secondary" href="{% url 'control:user_list' %}">К списку</a>
             {% if edit_mode %}
-                <button type="submit" class="button primary">
-                    Сохранить
-                </button>
-                <a class="button secondary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}">
-                    Отмена
-                </a>
+                <button type="button" class="button primary" onclick="document.getElementById('hidden-submit').click()">Сохранить</button>
+                <a class="button secondary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}">Отмена</a>
             {% else %}
-                <a class="button primary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}?edit=1">
-                    Редактировать
-                </a>
+                <a class="button primary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}?edit=1">Редактировать</a>
             {% endif %}
         </div>
 
     </form>
 
 </section>
+
+<script>
+let emailCount = 0;
+let phoneCount = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    emailCount = document.querySelectorAll('[id^="email-row-"]').length;
+    phoneCount = document.querySelectorAll('[id^="phone-row-"]').length;
+});
+
+function addEmailRow() {
+    const container = document.getElementById('emails-container');
+    const div = document.createElement('div');
+    div.className = 'uc-contact-row';
+    div.id = 'email-row-' + emailCount;
+    const placeholder = emailCount === 1 ? 'Личная' : 'Комментарий';
+    div.innerHTML = `
+        <input type="email" name="email_${emailCount}"
+            class="form-input uc-contact-input" placeholder="email@example.com">
+        <div class="uc-contact-note-wrap">
+            <input type="text" name="email_comment_${emailCount}"
+                class="form-input uc-contact-note-input" placeholder="${placeholder}">
+            <button type="button" class="uc-remove-btn"
+                onclick="removeRow('email-row-${emailCount}', 'email')">✕</button>
+        </div>
+    `;
+    container.appendChild(div);
+    emailCount++;
+}
+
+function addPhoneRow() {
+    const container = document.getElementById('phones-container');
+    const div = document.createElement('div');
+    div.className = 'uc-contact-row';
+    div.id = 'phone-row-' + phoneCount;
+    const placeholder = phoneCount === 1 ? 'Личный' : 'Комментарий';
+    div.innerHTML = `
+        <div class="uc-phone-wrap">
+            <input type="text" name="phone_code_${phoneCount}"
+                class="form-input uc-phone-code" placeholder="+7" value="+7">
+            <input type="text" name="phone_${phoneCount}"
+                class="form-input uc-contact-input" placeholder="9036709699">
+        </div>
+        <div class="uc-contact-note-wrap">
+            <input type="text" name="phone_comment_${phoneCount}"
+                class="form-input uc-contact-note-input" placeholder="${placeholder}">
+            <button type="button" class="uc-remove-btn"
+                onclick="removeRow('phone-row-${phoneCount}', 'phone')">✕</button>
+        </div>
+    `;
+    container.appendChild(div);
+    phoneCount++;
+}
+
+function removeRow(rowId, type) {
+    const row = document.getElementById(rowId);
+    if (row) row.remove();
+}
+
+function resetPassword(url) {
+    if (!confirm('Сбросить пароль и отправить новый на почту?')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const action = document.createElement('input');
+    action.type = 'hidden';
+    action.name = 'action';
+    action.value = 'reset_password';
+    form.appendChild(csrf);
+    form.appendChild(action);
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 {% endblock %}

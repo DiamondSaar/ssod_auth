@@ -120,9 +120,55 @@ def user_detail(request, uuid):
         form = UserEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
+
+            # --- Сохраняем почты ---
+            from accounts.models import UserEmail
+            UserEmail.objects.filter(user=user).delete()
+            i = 0
+            while True:
+                email_val = request.POST.get(f"email_{i}", "").strip()
+                if not email_val:
+                    i += 1
+                    if i > 20:
+                        break
+                    continue
+                comment_val = request.POST.get(f"email_comment_{i}", "").strip()
+                UserEmail.objects.create(
+                    user=user,
+                    email=email_val,
+                    comment=comment_val,
+                    is_primary=(i == 0),
+                )
+                i += 1
+                if i > 20:
+                    break
+
+            # --- Сохраняем телефоны ---
+            from accounts.models import UserPhone
+            UserPhone.objects.filter(user=user).delete()
+            i = 0
+            while True:
+                phone_val = request.POST.get(f"phone_{i}", "").strip()
+                if not phone_val:
+                    i += 1
+                    if i > 20:
+                        break
+                    continue
+                code_val = request.POST.get(f"phone_code_{i}", "+7").strip()
+                comment_val = request.POST.get(f"phone_comment_{i}", "").strip()
+                UserPhone.objects.create(
+                    user=user,
+                    country_code=code_val,
+                    number=phone_val,
+                    comment=comment_val,
+                    is_primary=(i == 0),
+                )
+                i += 1
+                if i > 20:
+                    break
+
             messages.success(request, "Данные пользователя сохранены.")
             return redirect("control:user_detail", uuid=uuid)
-        # Если форма невалидна — остаёмся в режиме редактирования
         edit_mode = True
     else:
         form = UserEditForm(instance=user)
