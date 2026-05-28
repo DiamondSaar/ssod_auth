@@ -204,6 +204,40 @@ class CustomUser(AbstractUser):
         blank=True,
         verbose_name="Причина блокировки",
     )
+    birth_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Дата рождения",
+    )
+
+    avatar = models.ImageField(
+        upload_to="avatars/",
+        null=True,
+        blank=True,
+        verbose_name="Аватар",
+    )
+
+    admin_comment = models.TextField(
+        blank=True,
+        verbose_name="Комментарий администратора",
+        help_text="Виден только администраторам системы.",
+    )
+
+    public_comment = models.TextField(
+        blank=True,
+        verbose_name="Комментарий для пользователя",
+        help_text="Виден самому пользователю.",
+    )
+
+    system_role = models.ForeignKey(
+        "SystemRole",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users",
+        verbose_name="Роль в системе",
+    )
+
 
     class Meta:
         verbose_name = "Пользователь"
@@ -575,6 +609,14 @@ class UserEmail(TimeStampedModel):
         default=False,
         verbose_name="Основная",
     )
+    comment = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Комментарий",
+        help_text="Например: рабочая почта, для уведомлений",
+    )
+
+
 
     class Meta:
         verbose_name = "Email пользователя"
@@ -597,9 +639,12 @@ class UserPhone(TimeStampedModel):
         MOBILE = "mobile", "Мобильный"
         OTHER = "other", "Другой"
 
+    # Международный формат: от 5 до 15 цифр после кода страны.
+    # Примеры: 9036709699, 555123456
+    # Код страны хранится отдельно в поле country_code.
     phone_validator = RegexValidator(
-        regex=r"^\d{3}-\d{3}-\d{4}$",
-        message="Номер должен быть в формате XXX-XXX-XXXX",
+        regex=r"^\d{5,15}$",
+        message="Только цифры, от 5 до 15 символов.",
     )
 
     user = models.ForeignKey(
@@ -623,10 +668,16 @@ class UserPhone(TimeStampedModel):
     )
 
     number = models.CharField(
-        max_length=12,
+        max_length=15,
         validators=[phone_validator],
         verbose_name="Номер",
-        help_text="Формат: XXX-XXX-XXXX",
+        help_text="Только цифры без пробелов и тире. Например: 9036709699",
+    )
+    comment = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Комментарий",
+        help_text="Например: рабочий, звонить с 9 до 18",
     )
 
     is_primary = models.BooleanField(
@@ -800,7 +851,42 @@ class SSODAccessKey(TimeStampedModel):
     def __str__(self):
         return f"{self.user}: {self.name}"
 
+class SystemRole(TimeStampedModel):
+    """
+    Роль пользователя в системе Auth Center.
 
+    Это не класс доступа (буква S-G) — это человекочитаемая роль:
+    Администратор, Оператор, Пользователь и т.д.
+
+    Справочник — администратор добавляет роли через Django Admin
+    или через будущий интерфейс управления.
+    """
+
+    uuid = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        verbose_name="UUID",
+    )
+
+    name = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name="Название роли",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активна",
+    )
+
+    class Meta:
+        verbose_name = "Роль в системе"
+        verbose_name_plural = "Роли в системе"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
 class AuthEvent(TimeStampedModel):
     """
     Журнал событий авторизации.

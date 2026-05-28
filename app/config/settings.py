@@ -148,6 +148,12 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
+# ---------------------------------------------------------------------
+# Media files (avatars, uploads)
+# ---------------------------------------------------------------------
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "mediafiles"
+
 STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
