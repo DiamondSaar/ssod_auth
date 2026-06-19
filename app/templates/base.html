@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="{% static 'accounts/css/account-products.css' %}">
     <!-- Общий CSS проекта. Все стили держим отдельно, не размазываем по HTML. -->
     <link rel="stylesheet" href="{% static 'ssod_auth/css/app.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <main class="{% block main_class %}auth-page{% endblock %}">
@@ -16,5 +17,6 @@
 
     <!-- Общий JS проекта. Пока почти пустой, но структура уже правильная. -->
     <script src="{% static 'ssod_auth/js/app.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

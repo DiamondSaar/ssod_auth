@@ -1,0 +1,374 @@
+/* ==================================================================
+   Карточка пользователя (user_detail)
+   ================================================================== */
+
+.uc-top {
+    display: grid;
+    grid-template-columns: 180px 1fr 160px;
+    gap: 24px;
+    margin-bottom: 28px;
+    align-items: start;
+}
+
+/* --- Аватар --- */
+.uc-avatar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.uc-avatar-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px solid rgba(88, 117, 163, 0.45);
+    background: rgba(10, 18, 34, 0.6);
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.uc-avatar-wrap:hover {
+    border-color: rgba(255, 127, 26, 0.65);
+    transform: translateY(-2px);
+}
+
+.uc-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.uc-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    font-weight: 900;
+    color: #ff7f1a;
+    background: rgba(255, 127, 26, 0.08);
+}
+
+.uc-avatar-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.uc-avatar-wrap:hover .uc-avatar-overlay {
+    opacity: 1;
+}
+
+.uc-avatar-input {
+    display: none;
+}
+
+/* --- Центральная колонка --- */
+.uc-main-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.uc-field-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.uc-field-row-half {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.uc-field-group.uc-field-trio {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+}
+
+.uc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.uc-field.uc-field-full {
+    width: 100%;
+}
+
+.uc-field label {
+    font-size: 12px;
+    color: #8aa3cc;
+    font-weight: 600;
+}
+
+/* Общий стиль для отображения значений в режиме просмотра */
+.uc-field-display {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    border: 1px solid rgba(88, 117, 163, 0.35);
+    border-radius: 12px;
+    background: rgba(9, 17, 33, 0.38);
+    color: #f4f7ff;
+    font-size: 15px;
+    width: 100%;
+}
+
+.uc-field-display.uc-field-fio {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.uc-field-display.uc-field-muted {
+    color: #8aa3cc;
+    font-size: 13px;
+}
+
+.uc-field-display.uc-field-password {
+    letter-spacing: 3px;
+    color: #8aa3cc;
+}
+
+/* --- Правая колонка: статус и уровень доступа --- */
+.uc-status-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.uc-access-badge {
+    padding: 16px;
+    border-radius: 16px;
+    border: 2px solid #ff7f1a;
+    background: rgba(255, 127, 26, 0.08);
+    text-align: center;
+}
+
+.uc-access-letter {
+    font-size: 48px;
+    font-weight: 900;
+    color: #ff7f1a;
+    line-height: 1;
+}
+
+.uc-access-label {
+    font-size: 12px;
+    color: #8aa3cc;
+    margin-top: 4px;
+}
+
+.uc-status-badge {
+    padding: 12px 16px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.uc-status-active {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #4ade80;
+}
+
+.uc-status-blocked {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+.uc-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    color: #f4f7ff;
+    cursor: pointer;
+}
+
+/* ==================================================================
+   СРЕДНИЙ БЛОК
+   ================================================================== */
+
+.uc-middle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-bottom: 28px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(88, 117, 163, 0.25);
+}
+
+.uc-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Поле с подписью в режиме просмотра */
+.uc-field-labeled {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 14px;
+    border: 1px solid rgba(88, 117, 163, 0.35);
+    border-radius: 12px;
+    background: rgba(9, 17, 33, 0.38);
+}
+
+.uc-field-labeled.uc-field-admin {
+    border-color: rgba(255, 127, 26, 0.3);
+    background: rgba(255, 127, 26, 0.05);
+}
+
+.uc-field-lbl {
+    font-size: 11px;
+    color: #8aa3cc;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.uc-field-val {
+    font-size: 15px;
+    color: #f4f7ff;
+}
+
+/* --- Правая часть: продукты --- */
+.uc-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.uc-products-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #cfe0ff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.uc-products-table-wrap {
+    border: 1px solid rgba(88, 117, 163, 0.35);
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(9, 17, 33, 0.38);
+}
+
+.uc-products-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #f4f7ff;
+}
+
+.uc-products-table th {
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #8aa3cc;
+    font-weight: 700;
+    text-align: left;
+    background: rgba(18, 31, 54, 0.8);
+    border-bottom: 1px solid rgba(88, 117, 163, 0.25);
+}
+
+.uc-products-table td {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(88, 117, 163, 0.15);
+}
+
+.uc-products-table tr:last-child td {
+    border-bottom: none;
+}
+
+.uc-product-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #ff7f1a;
+    background: transparent;
+}
+
+.uc-product-dot-active {
+    background: #ff7f1a;
+    box-shadow: 0 0 8px rgba(255, 127, 26, 0.5);
+}
+
+/* ==================================================================
+   КНОПКИ ВНИЗУ
+   ================================================================== */
+
+.uc-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid rgba(88, 117, 163, 0.25);
+}
+
+.uc-btn-reset {
+    font-size: 13px;
+    padding: 8px 14px;
+}
+
+.uc-inline-form {
+    display: inline-flex;
+    align-items: center;
+}
+
+.uc-field-row-half > button {
+    min-height: 44px;
+}
+
+/* Сообщения */
+.messages-box {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(255, 127, 26, 0.12);
+    border: 1px solid rgba(255, 127, 26, 0.35);
+    color: #ffe1c2;
+    margin-bottom: 8px;
+}
+
+/* Адаптивность */
+@media (max-width: 1100px) {
+    .uc-top {
+        grid-template-columns: 140px 1fr 140px;
+    }
+}
+
+@media (max-width: 800px) {
+    .uc-top {
+        grid-template-columns: 1fr;
+    }
+
+    .uc-middle {
+        grid-template-columns: 1fr;
+    }
+
+    .uc-field-group.uc-field-trio {
+        grid-template-columns: 1fr;
+    }
+}

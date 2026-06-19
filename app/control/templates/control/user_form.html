@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
 {{ page_title }} — ССОД Auth Center
@@ -28,11 +29,12 @@
         </a>
     </div>
 
-    <form class="form-card" method="post">
+    <form class="form-card" method="post" enctype="multipart/form-data">
         {% csrf_token %}
 
         {% if form.non_field_errors %}
             <div class="form-errors">
+                <strong>Ошибка:</strong>
                 {{ form.non_field_errors }}
             </div>
         {% endif %}
@@ -40,21 +42,35 @@
         <div class="form-grid">
             {% for field in form %}
                 <div class="form-field {% if field.name == 'is_active' %}form-field-checkbox{% endif %}">
-                    <label for="{{ field.id_for_label }}">
-                        {{ field.label }}
-                    </label>
+                    {% if field.name != 'is_active' %}
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {% if field.field.required %}
+                                <span class="form-required">*</span>
+                            {% endif %}
+                        </label>
+                    {% endif %}
 
                     {{ field }}
 
+                    {% if field.name == 'is_active' %}
+                        <label class="form-checkbox-label" for="{{ field.id_for_label }}">
+                            {{ field }}
+                            {{ field.label }}
+                        </label>
+                    {% endif %}
+
                     {% if field.help_text %}
                         <div class="form-help">
-                            {{ field.help_text }}
+                            {{ field.help_text|safe }}
                         </div>
                     {% endif %}
 
                     {% if field.errors %}
-                        <div class="form-error">
-                            {{ field.errors }}
+                        <div class="form-field-errors">
+                            {% for error in field.errors %}
+                                <div class="form-error">{{ error }}</div>
+                            {% endfor %}
                         </div>
                     {% endif %}
                 </div>
@@ -63,7 +79,11 @@
 
         <div class="form-actions">
             <button class="button primary" type="submit">
-                Создать пользователя
+                {% if is_create %}
+                    Создать пользователя
+                {% else %}
+                    Сохранить
+                {% endif %}
             </button>
 
             <a class="button secondary" href="{% url 'control:user_list' %}">

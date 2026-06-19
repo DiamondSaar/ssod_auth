@@ -47,20 +47,18 @@
             <button class="button primary" type="submit">
                 Войти
             </button>
-        <div class="form-actions">
             <button class="button secondary" type="button" id="passkey-login-button">
                 Войти с passkey
             </button>
+            <a class="button secondary" href="/">
+                Назад
+            </a>
         </div>
 
         <div id="passkey-login-status" class="passkey-status"></div>
 
         <script src="{% static 'ssod_auth/js/passkey-login.js' %}"></script>
-
-            <a class="button secondary" href="/">
-                Назад
-            </a>
-        </div>
+        {% block extra_js %}{% endblock %}
     </form>
 
 </section>
