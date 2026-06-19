@@ -17,20 +17,27 @@
 
 
 .app-brand-logo {
-    width: 440px;
-    height: 200px;
+    width: 400px;
+    height: auto;
     object-fit: contain;
 }
 
 
+.app-brand-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 16px;
+}
+
 .app-brand-title {
-    font-size: 34px;
-    font-weight: 900;
-    line-height: 1;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-main);
 }
 
 .app-brand-subtitle {
-    margin-top: 4px;
+    margin-top: 14px;
     color: var(--text-muted);
     font-size: 15px;
 }

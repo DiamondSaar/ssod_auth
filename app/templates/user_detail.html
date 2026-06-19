@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ viewed_user.full_name_ru|default:viewed_user.username }} — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+<section class="admin-shell">
+
+    {% if messages %}
+        <div class="messages-box">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- ======================================================
+             ВЕРХНИЙ БЛОК: аватар / основные поля / статус
+        ====================================================== -->
+        <div class="uc-top">
+
+            <!-- Левая колонка: аватар -->
+            <div class="uc-avatar-col">
+                <div class="uc-avatar-wrap" {% if edit_mode %}onclick="document.getElementById('id_avatar').click()"{% endif %}>
+                    {% if viewed_user.avatar %}
+                        <img src="{{ viewed_user.avatar.url }}" alt="Аватар" class="uc-avatar-img" id="avatar-preview">
+                    {% else %}
+                        <div class="uc-avatar-placeholder" id="avatar-preview">
+                            {{ viewed_user.first_name|first|default:"?" }}{{ viewed_user.middle_name|first }}
+                        </div>
+                    {% endif %}
+                    {% if edit_mode %}
+                        <div class="uc-avatar-overlay">Сменить фото</div>
+                    {% endif %}
+                </div>
+                {% if edit_mode %}
+                    <input type="file" id="id_avatar" name="avatar" accept="image/*" class="uc-avatar-input" onchange="previewAvatar(this)">
+                {% endif %}
+            </div>
+
+            <!-- Центральная колонка: ФИО, организация, логин, пароль -->
+            <div class="uc-main-col">
+
+                <!-- ФИО -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field-group uc-field-trio">
+                            <div class="uc-field">
+                                <label>Фамилия</label>
+                                {{ form.last_name }}
+                            </div>
+                            <div class="uc-field">
+                                <label>Имя</label>
+                                {{ form.first_name }}
+                            </div>
+                            <div class="uc-field">
+                                <label>Отчество</label>
+                                {{ form.middle_name }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="uc-field-display uc-field-fio">
+                            {{ viewed_user.full_name_ru|default:"—" }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Организация -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Организация</label>
+                            {{ form.organization }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-display">
+                            {{ viewed_user.organization.name|default:"—" }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Логин + Дата регистрации -->
+                <div class="uc-field-row uc-field-row-half">
+                    {% if edit_mode %}
+                        <div class="uc-field">
+                            <label>Логин</label>
+                            {{ form.username }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-display">
+                            {{ viewed_user.username }}
+                        </div>
+                    {% endif %}
+                    <div class="uc-field-display uc-field-muted">
+                        Зарегистрирован: {{ viewed_user.date_joined|date:"d.m.Y" }}
+                    </div>
+                </div>
+
+                <!-- Пароль + кнопка сброса -->
+                <div class="uc-field-row uc-field-row-half">
+                    <div class="uc-field-display uc-field-password">
+                        ••••••••••••
+                    </div>
+                    {% if not viewed_user.pk is None %}
+                        <form method="post" class="uc-inline-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="reset_password">
+                            <button type="submit" class="button secondary uc-btn-reset"
+                                onclick="return confirm('Сбросить пароль и отправить новый на почту?')">
+                                Сбросить пароль
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Правая колонка: уровень доступа + статус -->
+            <div class="uc-status-col">
+
+                <div class="uc-access-badge">
+                    {% if edit_mode %}
+                        {{ form.access_class }}
+                    {% else %}
+                        <div class="uc-access-letter">{{ viewed_user.access_class }}</div>
+                        <div class="uc-access-label">Уровень доступа</div>
+                    {% endif %}
+                </div>
+
+                <div class="uc-status-badge {% if viewed_user.is_active %}uc-status-active{% else %}uc-status-blocked{% endif %}">
+                    {% if edit_mode %}
+                        <label class="uc-checkbox-label">
+                            {{ form.is_active }} Активен
+                        </label>
+                    {% else %}
+                        {% if viewed_user.is_active %}
+                            Активен
+                        {% else %}
+                            Заблокирован
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ======================================================
+             СРЕДНИЙ БЛОК: доп. поля слева / продукты справа
+        ====================================================== -->
+        <div class="uc-middle">
+
+            <!-- Левая часть -->
+            <div class="uc-left-col">
+
+                <!-- Должность -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Должность</label>
+                            {{ form.position }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-labeled">
+                            <span class="uc-field-lbl">Должность</span>
+                            <span class="uc-field-val">{{ viewed_user.position.name|default:"—" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Роль в системе -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Роль в системе</label>
+                            {{ form.system_role }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-labeled">
+                            <span class="uc-field-lbl">Роль в системе</span>
+                            <span class="uc-field-val">{{ viewed_user.system_role.name|default:"—" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Email -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Email</label>
+                            {{ form.email }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-labeled">
+                            <span class="uc-field-lbl">Email</span>
+                            <span class="uc-field-val">{{ viewed_user.email|default:"—" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Дата рождения -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Дата рождения</label>
+                            {{ form.birth_date }}
+                        </div>
+                    {% else %}
+                        <div class="uc-field-labeled">
+                            <span class="uc-field-lbl">Дата рождения</span>
+                            <span class="uc-field-val">
+                                {{ viewed_user.birth_date|date:"d.m.Y"|default:"—" }}
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Комментарий для пользователя -->
+                <div class="uc-field-row">
+                    {% if edit_mode %}
+                        <div class="uc-field uc-field-full">
+                            <label>Комментарий для пользователя</label>
+                            {{ form.public_comment }}
+                        </div>
+                    {% else %}
+                        {% if viewed_user.public_comment %}
+                            <div class="uc-field-labeled">
+                                <span class="uc-field-lbl">Комментарий</span>
+                                <span class="uc-field-val">{{ viewed_user.public_comment }}</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <!-- Комментарий администратора (только для staff) -->
+                {% if request.user.is_staff %}
+                    <div class="uc-field-row">
+                        {% if edit_mode %}
+                            <div class="uc-field uc-field-full">
+                                <label>Комментарий администратора</label>
+                                {{ form.admin_comment }}
+                            </div>
+                        {% else %}
+                            {% if viewed_user.admin_comment %}
+                                <div class="uc-field-labeled uc-field-admin">
+                                    <span class="uc-field-lbl">Заметка (admin)</span>
+                                    <span class="uc-field-val">{{ viewed_user.admin_comment }}</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Правая часть: таблица продуктов -->
+            <div class="uc-right-col">
+
+                <div class="uc-products-title">Доступ к продуктам</div>
+
+                <div class="uc-products-table-wrap">
+                    <table class="uc-products-table">
+                        <thead>
+                            <tr>
+                                <th>Продукт</th>
+                                <th>Статус</th>
+                                <th>С</th>
+                                <th>По</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in product_rows %}
+                                <tr>
+                                    <td>{{ row.product.name }}</td>
+                                    <td>
+                                        <div class="uc-product-dot {% if row.is_active %}uc-product-dot-active{% endif %}"
+                                             title="{% if row.is_active %}Активен{% else %}Нет доступа{% endif %}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if row.access %}
+                                            {{ row.access.valid_from|date:"d.m.Y" }}
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if row.access and row.access.valid_to %}
+                                            {{ row.access.valid_to|date:"d.m.Y" }}
+                                        {% else %}—{% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ======================================================
+             КНОПКИ ВНИЗУ
+        ====================================================== -->
+        <div class="uc-actions">
+            <a class="button secondary" href="{% url 'control:user_list' %}">
+                К списку
+            </a>
+
+            {% if edit_mode %}
+                <button type="submit" class="button primary">
+                    Сохранить
+                </button>
+                <a class="button secondary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}">
+                    Отмена
+                </a>
+            {% else %}
+                <a class="button primary" href="{% url 'control:user_detail' uuid=viewed_user.uuid %}?edit=1">
+                    Редактировать
+                </a>
+            {% endif %}
+        </div>
+
+    </form>
+
+</section>
+{% endblock %}
