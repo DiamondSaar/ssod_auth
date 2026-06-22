@@ -1,15 +1,17 @@
-from django.shortcuts import render
+from django.shortcuts import redirect
 
 
 def home(request):
-    """
-    Главная страница SSOD Auth Center.
+    return redirect("https://ssod.pro/", permanent=True)
 
-    Это публичная стартовая страница сервиса авторизации.
-    Позже отсюда будут доступны:
-    - вход пользователя;
-    - личный кабинет;
-    - выпуск Ключа доступа ССОД;
-    - управление привязанными ключами.
-    """
-    return render(request, "main/home.html")
+
+def services(request):
+    return redirect("https://ssod.pro/services/", permanent=True)
+
+
+def products(request):
+    return redirect("https://ssod.pro/products/", permanent=True)
+
+
+def contacts(request):
+    return redirect("https://ssod.pro/contacts/", permanent=True)
