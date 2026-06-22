@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Услуги — ССОД{% endblock %}
+
+{% block main_class %}site-page{% endblock %}
+
+{% block content %}
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="/">
+            <div class="brand-text">
+                <span>Системы связи и обработки данных</span>
+            </div>
+        </a>
+
+        <nav class="main-nav" aria-label="Основная навигация">
+            <a href="/">Главная</a>
+            <a href="/services/">Услуги</a>
+            <a href="/products/">Продукты</a>
+            <a href="/contacts/">Контакты</a>
+            <a class="nav-login" href="/account/">Личный кабинет</a>
+        </nav>
+    </div>
+</header><main class="services-page">
+    <section class="services-hero">
+        <div class="services-hero-left">
+            <div class="section-badge">Услуги ССОД</div>
+            <h1>Инженерные решения для IT-инфраструктуры, связи и защиты данных</h1>
+            <p>Проектирование, внедрение и сопровождение серверной, сетевой и прикладной инфраструктуры для бизнеса.</p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="/request/">Обсудить проект</a>
+                <a class="btn btn-secondary" href="#service-cards">Смотреть услуги</a>
+            </div>
+        </div>
+
+        <div class="services-hero-right">
+            <div class="hero-side-card">
+                <h3>Основные направления</h3>
+                <ul>
+                    <li>Серверы и виртуализация</li>
+                    <li>Сети, VPN и защищённый доступ</li>
+                    <li>Мониторинг и сопровождение</li>
+                    <li>Автоматизация внутренних процессов</li>
+                    <li>Разработка собственных IT-продуктов</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="service-section" id="service-cards">
+        <div class="section-header">
+            <div class="section-badge">Форматы сотрудничества</div>
+            <h2>Комплексные IT-услуги</h2>
+        </div>
+
+        <div class="service-grid">
+            <article class="service-card"><h3>Аутстаффинг специалистов</h3><p>Наши специалисты подключаются к работе вашей компании. Вы получаете опытных сотрудников для оперативного решения задач в своей зоне ответственности.</p></article>
+            <article class="service-card"><h3>IT-аутсорсинг</h3><p>Полное сопровождение IT-инфраструктуры: серверы, сети, рабочие станции, безопасность и поддержка пользователей.</p></article>
+            <article class="service-card"><h3>Заказная разработка</h3><p>Разработка и адаптация решений под задачи бизнеса. Автоматизация процессов, мониторинг и внутренние сервисы.</p></article>
+            <article class="service-card"><h3>Системная интеграция</h3><p>Интеграция сервисов, приложений и оборудования в единую управляемую инфраструктуру.</p></article>
+            <article class="service-card"><h3>Интегратор ИБ</h3><p>Комплексные решения по защите данных, сетей и корпоративной инфраструктуры.</p></article>
+            <article class="service-card"><h3>Судебная и досудебная экспертиза</h3><p>Экспертная оценка и технический анализ в сфере IT и информационной безопасности.</p></article>
+        </div>
+    </section>
+
+    <section class="infra-section">
+        <div class="section-header">
+            <div class="section-badge">Инфраструктура</div>
+            <h2>Направления реализации проектов</h2>
+        </div>
+
+        <div class="infra-grid">
+            <div class="infra-tile">Видеонаблюдение</div>
+            <div class="infra-tile">СКУД</div>
+            <div class="infra-tile">Сетевая инфраструктура</div>
+            <div class="infra-tile">Серверы</div>
+            <div class="infra-tile">Рабочие станции</div>
+            <div class="infra-tile">Периферийные устройства</div>
+            <div class="infra-tile">Печать и сканирование</div>
+            <div class="infra-tile">Интеграция ПО</div>
+        </div>
+    </section>
+</main><footer class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <strong>ООО «НПО Системы связи и обработки данных»</strong>
+            <p>Инженерные решения в области IT-инфраструктуры, обработки данных и сетевой безопасности.</p>
+        </div>
+
+        <div class="footer-contact">
+            <span>ssod.pro</span>
+            <span>+7 995 505-01-86</span>
+        </div>
+    </div>
+</footer>
+{% endblock %}

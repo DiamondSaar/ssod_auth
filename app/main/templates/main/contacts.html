@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Контакты — ССОД{% endblock %}
+
+{% block main_class %}site-page{% endblock %}
+
+{% block content %}
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="/">
+            <div class="brand-text">
+                <span>Системы связи и обработки данных</span>
+            </div>
+        </a>
+
+        <nav class="main-nav" aria-label="Основная навигация">
+            <a href="/">Главная</a>
+            <a href="/services/">Услуги</a>
+            <a href="/products/">Продукты</a>
+            <a href="/contacts/">Контакты</a>
+            <a class="nav-login" href="/account/">Личный кабинет</a>
+        </nav>
+    </div>
+</header><main class="contacts-page">
+    <section class="contacts-hero">
+        <div class="section-badge">Контакты</div>
+        <h1>Контактная информация</h1>
+        <p>Связаться с нами можно по телефону или электронной почте.</p>
+    </section>
+
+    <section class="contacts-grid">
+        <article class="contact-card"><div class="contact-label">Телефон</div><div class="contact-value">+7 (995) 505-01-86</div></article>
+        <article class="contact-card"><div class="contact-label">Email</div><div class="contact-value">info@ssod.pro</div></article>
+    </section>
+
+    <section class="company-section">
+        <div class="section-header">
+            <div class="section-badge">Юридическая информация</div>
+            <h2>Реквизиты</h2>
+        </div>
+
+        <div class="company-card">
+            <div class="company-row"><div class="company-key">Наименование</div><div class="company-value">ООО «НПО Системы связи и обработки данных»</div></div>
+            <div class="company-row"><div class="company-key">Сокращенное наименование</div><div class="company-value">ООО «НПО ССОД»</div></div>
+            <div class="company-row"><div class="company-key">ИНН</div><div class="company-value">7716259720</div></div>
+            <div class="company-row"><div class="company-key">Юридический адрес</div><div class="company-value">129344, г. Москва, вн.тер.г. муниципальный округ Бабушкинский, ул. Лётчика Бабушкина, д. 1 к. 3, помещ. 419</div></div>
+        </div>
+    </section>
+</main><footer class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <strong>ООО «НПО Системы связи и обработки данных»</strong>
+            <p>Инженерные решения в области IT-инфраструктуры, обработки данных и сетевой безопасности.</p>
+        </div>
+
+        <div class="footer-contact">
+            <span>ssod.pro</span>
+            <span>+7 995 505-01-86</span>
+        </div>
+    </div>
+</footer>
+{% endblock %}

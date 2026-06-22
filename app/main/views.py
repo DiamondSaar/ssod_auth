@@ -2,14 +2,16 @@ from django.shortcuts import render
 
 
 def home(request):
-    """
-    Главная страница SSOD Auth Center.
-
-    Это публичная стартовая страница сервиса авторизации.
-    Позже отсюда будут доступны:
-    - вход пользователя;
-    - личный кабинет;
-    - выпуск Ключа доступа ССОД;
-    - управление привязанными ключами.
-    """
     return render(request, "main/home.html")
+
+
+def services(request):
+    return render(request, "main/services.html")
+
+
+def products(request):
+    return render(request, "main/products.html")
+
+
+def contacts(request):
+    return render(request, "main/contacts.html")

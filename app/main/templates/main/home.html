@@ -1,43 +1,164 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}
-ССОД Auth Center
+ССОД — IT-инфраструктура, безопасность и автоматизация
 {% endblock %}
 
+{% block main_class %}site-page{% endblock %}
+
 {% block content %}
-<section class="hero-card">
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="/">
+            <div class="brand-text">
+                <span>Системы связи и обработки данных</span>
+            </div>
+        </a>
 
-    <div class="hero-badge">
-        ССОД Auth Center
+        <nav class="main-nav" aria-label="Основная навигация">
+            <a href="/">Главная</a>
+            <a href="/services/">Услуги</a>
+            <a href="/products/">Продукты</a>
+            <a href="/contacts/">Контакты</a>
+            <a class="nav-login" href="/account/">Личный кабинет</a>
+        </nav>
     </div>
+</header>
 
-    <h1>
-        Центр авторизации ССОД
-    </h1>
+<section class="hero">
+    <div class="container hero-grid">
+        <div class="hero-side">
+            <img
+                class="hero-logo"
+                src="{% static 'ssod_auth/img/LogoSSOD_plus.png' %}"
+                alt="ССОД"
+            >
 
-    <p class="hero-text">
-        Единая точка входа для сервисов ССОД,
-        будущих продуктов Dominex,
-        FinSoft и внутренних ключей доступа.
-    </p>
+            <div class="hero-card">
+                <div class="hero-card-title">Основные направления</div>
+                <ul>
+                    <li>Серверы и виртуализация</li>
+                    <li>Сети, VPN и защищённый доступ</li>
+                    <li>Мониторинг и сопровождение</li>
+                    <li>Автоматизация внутренних процессов</li>
+                    <li>Разработка собственных IT-продуктов</li>
+                </ul>
+            </div>
+        </div>
 
+        <div class="hero-content">
+            <h1>Инженерные решения для <span class="nowrap">IT-инфраструктуры</span>, связи и защиты данных</h1>
 
-    <div class="hero-actions">
-        <a class="button primary" href="/account/">
-            Вход в ЛК
-        </a>
+            <p class="hero-text">
+                Проектирование, внедрение и сопровождение серверной, сетевой и прикладной инфраструктуры
+                для организаций, которым нужна не магия, а работающая система.
+            </p>
 
-        <a class="button secondary" href="/manage/">
-            Панель управления
-        </a>
-
-        <a class="button secondary" href="https://ssod.pro/">
-            Основной сайт
-        </a>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="/request/">Оставить заявку</a>
+                <a class="btn btn-secondary" href="/services/">Смотреть услуги</a>
+            </div>
+        </div>
     </div>
-
-
-
-
 </section>
+<section class="section">
+    <div class="container">
+        <div class="section-heading">
+            <span>Услуги</span>
+            <h2>Что мы можем сделать</h2>
+            <p>Набор инженерных услуг для компаний, которым нужно привести инфраструктуру в порядок и развивать её без хаоса.</p>
+        </div>
+
+        <div class="services-grid">
+            <article class="service-card">
+                <h3>IT-инфраструктура</h3>
+                <p>Аудит, проектирование и внедрение серверов, рабочих мест, доменной инфраструктуры и базовых сервисов.</p>
+            </article>
+
+            <article class="service-card">
+                <h3>Сети и VPN</h3>
+                <p>Настройка маршрутизации, VLAN, защищённого удалённого доступа, межофисных соединений и сетевой безопасности.</p>
+            </article>
+
+            <article class="service-card">
+                <h3>Серверы и виртуализация</h3>
+                <p>Развёртывание Linux/Windows-серверов, гипервизоров, резервирования и систем хранения.</p>
+            </article>
+
+            <article class="service-card">
+                <h3>Мониторинг</h3>
+                <p>Внедрение мониторинга, уведомлений, контроля доступности сервисов, сетевого оборудования и серверов.</p>
+            </article>
+
+            <article class="service-card">
+                <h3>Информационная безопасность</h3>
+                <p>Базовая защита периметра, разграничение доступа, hardening серверов и контроль критичных узлов.</p>
+            </article>
+
+            <article class="service-card">
+                <h3>Автоматизация</h3>
+                <p>Разработка внутренних инструментов, админ-панелей, учётных систем и интеграций под реальные процессы.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="section section-dark">
+    <div class="container">
+        <div class="section-heading">
+            <span>Продукты</span>
+            <h2>Собственные разработки</h2>
+        </div>
+
+        <div class="products-grid">
+            <article class="product-card">
+                <h3>FinSoft</h3>
+                <p>Система учёта финансов, операций, счетов, карт, категорий и связанных данных.</p>
+                <a href="/products/finsoft/">Подробнее</a>
+            </article>
+
+            <article class="product-card">
+                <h3>Dominex</h3>
+                <p>Платформа учёта IT-объектов, связей, ответственности, доступа и инфраструктурных сущностей.</p>
+                <a href="/products/dominex/">Подробнее</a>
+            </article>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card">
+            <div>
+                <div class="section-badge">Обсуждение проекта</div>
+
+                <h2>Нужна консультация или расчет проекта?</h2>
+
+                <p>
+                    Свяжитесь с нами и опишите задачу.
+                    Мы подготовим оптимальное решение под вашу инфраструктуру.
+                </p>
+            </div>
+
+            <div class="cta-actions">
+                <a class="btn btn-primary" href="/request/">Оставить заявку</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="container footer-inner">
+        <div>
+            <strong>ООО «НПО Системы связи и обработки данных»</strong>
+            <p>Инженерные решения в области IT-инфраструктуры, обработки данных и сетевой безопасности.</p>
+        </div>
+
+        <div class="footer-contact">
+            <span>ssod.pro</span>
+            <span>+7 995 505-01-86</span>
+        </div>
+    </div>
+</footer>
 {% endblock %}
