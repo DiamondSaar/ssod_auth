@@ -6,13 +6,15 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 
-def fetch_user_projection(username):
+def fetch_user_projection(username, timeout=5):
     """Fetch the identity + product-access projection for one user from
     Dominex Core (see dominex/docs/module-interactions.md).
 
-    Best-effort only - this is a sync/cache path, not part of the live
-    login flow, so any failure (connection error, non-200, bad JSON) is
-    logged and returns None rather than raising.
+    Best-effort only - any failure (connection error, non-200, bad JSON)
+    is logged and returns None rather than raising. Called both from the
+    manual sync_dominex_products command (default 5s timeout is fine) and
+    from the live per-login refresh (accounts/signals.py passes a shorter
+    timeout - this call is now in the interactive login path).
     """
 
     url = f"{settings.DOMINEX_API_BASE_URL}/api/v1/identity/projection/users/{username}"
@@ -20,7 +22,7 @@ def fetch_user_projection(username):
         response = requests.get(
             url,
             headers={"X-Dominex-Api-Key": settings.DOMINEX_API_KEY},
-            timeout=5,
+            timeout=timeout,
         )
     except requests.RequestException:
         logger.warning("Dominex projection request failed for %s", username, exc_info=True)
