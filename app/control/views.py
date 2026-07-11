@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -11,16 +12,14 @@ from .forms import UserCreateForm, UserEditForm
 
 @staff_member_required
 def dashboard(request):
-    cards = [
-        {"title": "Пользователи", "description": "Учетные записи, статусы, классы доступа и ключи ССОД.", "url": "/manage/users/"},
-        {"title": "Организации", "description": "Справочник юридических лиц и организаций.", "url": "#"},
-        {"title": "Продукты", "description": "Dominex, FinSoft, Личный кабинет и другие сервисы.", "url": "#"},
-        {"title": "Роли и права", "description": "Наборы прав доступа для продуктов ССОД.", "url": "/account/roles-rights/"},
-        {"title": "Доступы", "description": "Кто, к какому продукту и от какой организации имеет доступ.", "url": "#"},
-        {"title": "Ключи ССОД", "description": "Выпуск, отзыв и контроль ключей доступа.", "url": "#"},
-        {"title": "Журнал событий", "description": "Входы, ошибки авторизации и проверки доступа.", "url": "#"},
-    ]
-    return render(request, "control/dashboard.html", {"cards": cards})
+    """
+    Legacy SSOD Auth management dashboard.
+
+    Master-data management is moving to Dominex Core. Keep this route as a
+    compatibility bridge so old /manage/ links do not expose a second admin
+    console or create conflicting ownership.
+    """
+    return redirect(settings.DOMINEX_CORE_CONSOLE_URL)
 
 
 @staff_member_required

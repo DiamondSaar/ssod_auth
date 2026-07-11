@@ -241,3 +241,12 @@ AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "django_otp_webauthn.backends.WebAuthnBackend",
 ]
+
+# Dominex Core console location. In production this should point to the public Dominex Core URL.
+DOMINEX_CORE_CONSOLE_URL = env("DOMINEX_CORE_CONSOLE_URL", default="http://127.0.0.1:5006/core/console/")
+
+# Dominex Core identity/access projection API (see dominex/docs/module-interactions.md).
+# Base URL only (no trailing /api/v1) - accounts/services/dominex_client.py appends the path.
+# Key must match Dominex's DOMINEX_INTEGRATION_API_KEY.
+DOMINEX_API_BASE_URL = env("DOMINEX_API_BASE_URL", default="http://dominex_app:5000")
+DOMINEX_API_KEY = env("DOMINEX_API_KEY", default="dev-integration-key-change-me")

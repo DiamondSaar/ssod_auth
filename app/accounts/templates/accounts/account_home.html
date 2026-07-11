@@ -23,8 +23,8 @@ account-page
     </h1>
 
     <p class="admin-subtitle">
-        Здесь будут отображаться доступные продукты, ключи доступа ССОД,
-        профиль пользователя, заявки и уведомления.
+        Здесь доступны продукты экосистемы, настройки безопасности, API-ключи,
+        passkey и заявки пользователя.
     </p>
 
     <div class="admin-grid">
@@ -32,31 +32,26 @@ account-page
         <a class="admin-card" href="{% url 'accounts:account_products' %}">
             <h2>Мои продукты</h2>
             <p>
-                Доступные сервисы и продукты экосистемы ССОД.
+                Доступные сервисы и продукты экосистемы ССОД/Dominex.
             </p>
         </a>
 
         <a class="admin-card" href="{% url 'accounts:security' %}">
             <h2>Безопасность</h2>
-            <p>Passkey, устройства входа и ключи доступа ССОД.</p>
+            <p>Passkey, устройства входа и API-ключи ССОД.</p>
         </a>
+
         <a class="admin-card" href="#">
             <h2>Мои заявки</h2>
             <p>Создание и просмотр заявок.</p>
         </a>
-
-        <a class="admin-card" href="{% url 'accounts:security' %}">
-            <h2>Безопасность</h2>
-            <p>Passkey, устройства входа и настройки безопасности.</p>
-        </a>
-
 
     </div>
 
     <div class="account-actions-row">
         {% if request.user.is_staff %}
             <a class="button primary" href="/manage/">
-                Панель управления
+                Консоль DomineX-Core
             </a>
         {% endif %}
 
