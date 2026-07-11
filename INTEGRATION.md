@@ -2,7 +2,12 @@
 
 SSOD Auth is the credentials/session/passkey layer; Dominex Core
 (`D:\projects\dominex`) is the identity/product-access master data source.
-Full architecture: `dominex/docs/module-interactions.md`.
+
+**For the full ecosystem picture** (Dominex's data model, access-class
+system, console UI conventions, all three repos, deployment/dev setup —
+not just this integration), read `dominex/ARCHITECTURE.md` first. Deep-dive
+on just the integration architecture: `dominex/docs/module-interactions.md`.
+Full dated history/reasoning for everything: `dominex/PROJECT_CONTEXT.md`.
 
 ## What exists today (Phase 1, added 2026-07-11)
 
