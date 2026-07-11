@@ -541,6 +541,19 @@ class UserProductAccess(TimeStampedModel):
         verbose_name="Комментарий",
     )
 
+    dominex_grant_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="ID гранта в Dominex",
+        help_text="ProductAccessGrant.id из Dominex Core - если задан, эта запись является проекцией/кэшем, а не локально управляемой.",
+    )
+
+    synced_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Синхронизировано из Dominex",
+    )
+
     class Meta:
         verbose_name = "Доступ пользователя к продукту"
         verbose_name_plural = "Доступы пользователей к продуктам"

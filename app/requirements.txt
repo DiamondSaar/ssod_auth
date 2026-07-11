@@ -6,3 +6,4 @@ whitenoise>=6.8,<7.0
 django-otp
 django-otp-webauthn
 Pillow
+requests>=2.31,<3.0
