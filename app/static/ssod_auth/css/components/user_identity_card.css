@@ -1,14 +1,52 @@
 .user-identity-card {
+    position: relative;
     display: grid;
     grid-template-columns: 82px 1fr;
     gap: 10px;
     width: 410px;
     padding: 10px;
     border: 1px solid var(--border-soft);
+    border-left-width: 4px;
+    border-left-style: solid;
     border-radius: 18px;
     background: rgba(17, 24, 39, 0.88);
     box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
 }
+
+.user-identity-corner-badge {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    min-width: 20px;
+    min-height: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.88);
+    z-index: 1;
+}
+
+.access-border-G { border-left-color: #64748b; }
+.access-border-F { border-left-color: #475569; }
+.access-border-E { border-left-color: #22c55e; }
+.access-border-D { border-left-color: #3b82f6; }
+.access-border-C { border-left-color: #8b5cf6; }
+.access-border-B { border-left-color: #f97316; }
+.access-border-A { border-left-color: #eab308; }
+.access-border-S { border-left-color: #ef4444; }
+
+.access-badge-G { background: #1e293b; border-color: #64748b; color: #cbd5e1; }
+.access-badge-F { background: #1e293b; border-color: #475569; color: #94a3b8; }
+.access-badge-E { background: #052e16; border-color: #22c55e; color: #4ade80; }
+.access-badge-D { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+.access-badge-C { background: #2e1065; border-color: #8b5cf6; color: #c4b5fd; }
+.access-badge-B { background: #27180a; border-color: #f97316; color: #fdba74; }
+.access-badge-A { background: #27200a; border-color: #eab308; color: #fde047; }
+.access-badge-S { background: #2d0a0a; border-color: #ef4444; color: #fca5a5; }
 
 .user-identity-photo {
     min-height: 120px;
@@ -36,14 +74,6 @@
     gap: 8px;
 }
 
-.user-identity-top {
-    display: grid;
-    grid-template-columns: 1fr 58px;
-    gap: 8px;
-}
-
-.user-identity-empty,
-.user-identity-access,
 .user-identity-line {
     min-height: 34px;
     padding: 8px 10px;
@@ -52,23 +82,11 @@
     background: rgba(15, 23, 42, 0.78);
 }
 
-.user-identity-access {
-    display: grid;
-    place-items: center;
-}
-
 .user-identity-value {
     color: var(--text-main);
     font-size: 15px;
     font-weight: 800;
     line-height: 1.2;
-}
-
-.user-identity-access-letter {
-    color: var(--accent-orange);
-    font-size: 30px;
-    font-weight: 900;
-    line-height: 1;
 }
 
 @media (max-width: 700px) {
@@ -86,16 +104,4 @@
     height: 100%;
     object-fit: cover;
     border-radius: inherit;
-}
-
-.user-identity-role {
-    font-size: 11px;
-    color: #8aa3cc;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }

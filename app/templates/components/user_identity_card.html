@@ -1,4 +1,7 @@
-<div class="user-identity-card">
+<div class="user-identity-card access-border-{{ request.user.access_class }}">
+    <div class="user-identity-corner-badge access-badge-{{ request.user.access_class }}">
+        {{ request.user.access_class }}
+    </div>
     <div class="user-identity-photo">
         {% if request.user.avatar %}
             <img src="{{ request.user.avatar.url }}" alt="Аватар" class="user-identity-avatar-img">
@@ -9,14 +12,14 @@
         {% endif %}
     </div>
     <div class="user-identity-main">
-        <div class="user-identity-top">
-            <div class="user-identity-role">
-                {{ request.user.system_role.name|default:"—" }}
+        <div class="user-identity-line">
+            <div class="user-identity-value">
+                {{ request.user.organization.name|default:"—" }}
             </div>
-            <div class="user-identity-access">
-                <div class="user-identity-access-letter">
-                    {{ request.user.access_class }}
-                </div>
+        </div>
+        <div class="user-identity-line">
+            <div class="user-identity-value">
+                {{ request.user.position.name|default:"—" }}
             </div>
         </div>
         <div class="user-identity-line">

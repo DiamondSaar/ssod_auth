@@ -18,19 +18,10 @@ account-page
         Личный кабинет
     </div>
 
-    <h1 class="admin-title">
-        Рабочая область
-    </h1>
-
-    <p class="admin-subtitle">
-        Здесь доступны продукты экосистемы, настройки безопасности, API-ключи,
-        passkey и заявки пользователя.
-    </p>
-
     <div class="admin-grid">
 
         <a class="admin-card" href="{% url 'accounts:account_products' %}">
-            <h2>Мои продукты</h2>
+            <h2>Сервисы</h2>
             <p>
                 Доступные сервисы и продукты экосистемы ССОД/Dominex.
             </p>
@@ -49,7 +40,7 @@ account-page
     </div>
 
     <div class="account-actions-row">
-        {% if request.user.is_staff %}
+        {% if request.user.is_superuser %}
             <a class="button primary" href="/manage/">
                 Консоль DomineX-Core
             </a>
