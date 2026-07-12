@@ -25,11 +25,25 @@ class DominexCredentialBackend(BaseBackend):
 
         User = get_user_model()
         user, created = User.objects.get_or_create(username=username)
+        update_fields = []
         if created:
             # Never checked by this backend once created - Dominex is the
             # only place this user's real credential lives.
             user.set_unusable_password()
-            user.save(update_fields=["password"])
+            update_fields.append("password")
+        if user.must_change_password:
+            # This field drives a *local* "change your password" form
+            # (accounts/views.py::change_password) that writes to the same
+            # dead local password field above - meaningless and actively
+            # misleading once Dominex owns the real credential. Force it
+            # off here (covers both brand-new users and any pre-existing
+            # row still carrying the model's must_change_password=True
+            # default from before this backend existed) rather than
+            # relying on a one-off data migration.
+            user.must_change_password = False
+            update_fields.append("must_change_password")
+        if update_fields:
+            user.save(update_fields=update_fields)
 
         projection = fetch_user_projection(username)
         if projection:

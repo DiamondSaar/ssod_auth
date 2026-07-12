@@ -50,6 +50,16 @@ def change_password(request):
     Старый пароль не запрашиваем, потому что пользователь уже вошел.
     """
 
+    if settings.DOMINEX_CONNECTED_MODE:
+        # This form writes to CustomUser's local password field, which
+        # DominexCredentialBackend never checks - Dominex owns the real
+        # credential. Defense in depth: auth_backends.py already forces
+        # must_change_password off on every Dominex-verified login, so
+        # this view shouldn't normally be reached at all, but block it
+        # outright rather than let it silently do nothing useful.
+        messages.info(request, "Смена пароля выполняется в Dominex Core.")
+        return redirect("accounts:account_home")
+
     if request.method == "POST":
         form = FirstPasswordChangeForm(request.POST)
 
