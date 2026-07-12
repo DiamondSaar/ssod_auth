@@ -237,10 +237,20 @@ LOGIN_URL = "/account/login/"
 LOGIN_REDIRECT_URL = "/account/"
 LOGOUT_REDIRECT_URL = "/"
 
+# When True (default), Dominex is the sole store of login credentials -
+# DominexCredentialBackend replaces the local password check entirely.
+# Flip to False (+ restart) as a break-glass rollback: re-adds ModelBackend,
+# which still works for any account with a real local hash (notably the
+# Django superuser(s) created before this switch - their local password is
+# deliberately left untouched, see the 0006 data migration).
+DOMINEX_CREDENTIAL_BACKEND_ENABLED = env.bool("DOMINEX_CREDENTIAL_BACKEND_ENABLED", default=True)
+
 AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
+    "accounts.auth_backends.DominexCredentialBackend",
     "django_otp_webauthn.backends.WebAuthnBackend",
 ]
+if not DOMINEX_CREDENTIAL_BACKEND_ENABLED:
+    AUTHENTICATION_BACKENDS.insert(1, "django.contrib.auth.backends.ModelBackend")
 
 # Dominex Core console location. In production this should point to the public Dominex Core URL.
 DOMINEX_CORE_CONSOLE_URL = env("DOMINEX_CORE_CONSOLE_URL", default="http://127.0.0.1:5006/core/console/")
