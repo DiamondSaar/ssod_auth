@@ -328,6 +328,14 @@ class Product(TimeStampedModel):
         verbose_name="Активен",
     )
 
+    sso_enabled = models.BooleanField(
+        default=False,
+        verbose_name="SSO-тикет",
+        help_text="Если включено, кнопка запуска продукта выдаёт подписанный "
+        "SSO-тикет вместо прямого перехода по product_url "
+        "(см. dominex/docs/module-interactions.md).",
+    )
+
     class Meta:
         verbose_name = "Продукт"
         verbose_name_plural = "Продукты"

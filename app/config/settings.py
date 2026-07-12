@@ -250,3 +250,14 @@ DOMINEX_CORE_CONSOLE_URL = env("DOMINEX_CORE_CONSOLE_URL", default="http://127.0
 # Key must match Dominex's DOMINEX_INTEGRATION_API_KEY.
 DOMINEX_API_BASE_URL = env("DOMINEX_API_BASE_URL", default="http://dominex_app:5000")
 DOMINEX_API_KEY = env("DOMINEX_API_KEY", default="dev-integration-key-change-me")
+
+# When True, Dominex is the sole source of truth for organization/position/
+# access_class/product access - local admin/control UI stops allowing direct
+# edits of those fields (see dominex/docs/module-interactions.md "Connected
+# Dominex Mode"). Flip to False as an emergency/local-mode rollback lever.
+DOMINEX_CONNECTED_MODE = env.bool("DOMINEX_CONNECTED_MODE", default=True)
+
+# Shared secret for verifying/issuing SSO tickets exchanged with Dominex
+# (see dominex/docs/module-interactions.md "Credential, Session, Token and
+# API Key Lifecycle"). Must match Dominex's SSO_TICKET_SECRET.
+SSO_TICKET_SECRET = env("SSO_TICKET_SECRET", default="dev-sso-ticket-secret-change-me")

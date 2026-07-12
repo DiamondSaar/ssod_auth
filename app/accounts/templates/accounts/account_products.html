@@ -38,7 +38,11 @@
                 <div
                     class="product-card {% if not is_allowed %}product-card-disabled{% endif %}"
                     {% if is_allowed %}
-                        onclick="window.location.href='{{ product.product_url }}'"
+                        {% if product.sso_enabled %}
+                            onclick="window.location.href='{% url 'accounts:sso_authorize' product.code %}'"
+                        {% else %}
+                            onclick="window.location.href='{{ product.product_url }}'"
+                        {% endif %}
                     {% else %}
                         onclick="showProductAccessDenied('{{ product.name|escapejs }}')"
                     {% endif %}

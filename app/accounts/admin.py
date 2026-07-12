@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
@@ -70,7 +71,13 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
-    readonly_fields = ("uuid",)
+    def get_readonly_fields(self, request, obj=None):
+        readonly = ("uuid",)
+        if settings.DOMINEX_CONNECTED_MODE:
+            # Dominex is the source of truth for these while connected -
+            # they only change via accounts/services/dominex_sync.py.
+            readonly += ("organization", "position", "access_class")
+        return readonly
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -86,6 +93,7 @@ class ProductAdmin(admin.ModelAdmin):
         "code",
         "product_url",
         "is_active",
+        "sso_enabled",
         "sort_order",
     )
 
@@ -136,6 +144,22 @@ class UserProductAccessAdmin(admin.ModelAdmin):
         "product__name",
         "product__code",
     )
+
+    def has_add_permission(self, request):
+        if settings.DOMINEX_CONNECTED_MODE:
+            # Grants arrive only via accounts/services/dominex_sync.py while connected.
+            return False
+        return super().has_add_permission(request)
+
+    def has_change_permission(self, request, obj=None):
+        if settings.DOMINEX_CONNECTED_MODE:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if settings.DOMINEX_CONNECTED_MODE:
+            return False
+        return super().has_delete_permission(request, obj)
 
 admin.site.register(Organization)
 admin.site.register(Position)

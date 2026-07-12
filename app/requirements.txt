@@ -7,3 +7,4 @@ django-otp
 django-otp-webauthn
 Pillow
 requests>=2.31,<3.0
+PyJWT>=2.8,<3.0

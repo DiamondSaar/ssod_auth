@@ -21,6 +21,12 @@ urlpatterns = [
     ),
 
     path(
+        "sso/authorize/<slug:product_code>/",
+        views.sso_authorize,
+        name="sso_authorize",
+    ),
+
+    path(
         "login/",
         auth_views.LoginView.as_view(
             template_name="accounts/login.html",

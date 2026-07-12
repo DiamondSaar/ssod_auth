@@ -24,6 +24,9 @@ def dashboard(request):
 
 @staff_member_required
 def user_list(request):
+    if settings.DOMINEX_CONNECTED_MODE:
+        return redirect(settings.DOMINEX_CORE_CONSOLE_URL)
+
     User = get_user_model()
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
@@ -71,6 +74,9 @@ def user_create(request):
     Создание нового пользователя.
     После сохранения отправляем письмо с временным паролем.
     """
+    if settings.DOMINEX_CONNECTED_MODE:
+        return redirect(settings.DOMINEX_CORE_CONSOLE_URL)
+
     if request.method == "POST":
         form = UserCreateForm(request.POST)
         if form.is_valid():
@@ -98,6 +104,9 @@ def user_detail(request, uuid):
     POST            — сохранение изменений
     POST ?action=reset_password — сброс пароля
     """
+    if settings.DOMINEX_CONNECTED_MODE:
+        return redirect(settings.DOMINEX_CORE_CONSOLE_URL)
+
     User = get_user_model()
     user = get_object_or_404(User, uuid=uuid)
 

@@ -1,8 +1,14 @@
+import uuid as uuid_lib
+from urllib.parse import urlencode
+
+import jwt
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.shortcuts import redirect, render
-from .models import Product, UserProductAccess, Organization, ProductRole, AccessClass
+from .models import AuthEvent, Product, UserProductAccess, Organization, ProductRole, AccessClass
 from .forms import FirstPasswordChangeForm, SSODAccessKeyCreateForm
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -18,6 +24,8 @@ from django.utils import timezone
 from accounts.models import SSODAccessKey
 
 from django_otp_webauthn.models import WebAuthnCredential
+
+SSO_TICKET_LIFETIME_SECONDS = 60
 
 @login_required
 def account_home(request):
@@ -224,6 +232,60 @@ def account_products(request):
             "product_cards": product_cards,
         },
     )
+
+
+@login_required
+def sso_authorize(request, product_code):
+    """
+    Выдаёт короткоживущий подписанный SSO-тикет для перехода в продукт
+    экосистемы (см. dominex/docs/module-interactions.md, "What Is Issued
+    On Login" - module access token / ticket layer).
+
+    Требует активный UserProductAccess (та же проверка, что в
+    account_products) и product.sso_enabled - иначе продукт просто не
+    участвует в тикет-флоу и должен использовать обычный product_url.
+    """
+    product = Product.objects.filter(code=product_code, is_active=True, sso_enabled=True).first()
+    if product is None:
+        raise Http404("Продукт не найден или не поддерживает SSO-тикет.")
+
+    is_allowed = UserProductAccess.objects.filter(
+        user=request.user,
+        product=product,
+        status=UserProductAccess.Status.ACTIVE,
+    ).exists()
+    if not is_allowed:
+        messages.error(request, "Нет доступа к этому продукту.")
+        return redirect("accounts:account_products")
+
+    next_path = request.GET.get("next", "")
+    if not next_path.startswith("/"):
+        next_path = ""
+
+    now = timezone.now()
+    jti = str(uuid_lib.uuid4())
+    payload = {
+        "sub": request.user.username,
+        "aud": product.code,
+        "iat": int(now.timestamp()),
+        "exp": int(now.timestamp()) + SSO_TICKET_LIFETIME_SECONDS,
+        "jti": jti,
+    }
+    ticket = jwt.encode(payload, settings.SSO_TICKET_SECRET, algorithm="HS256")
+
+    AuthEvent.objects.create(
+        user=request.user,
+        event_type=AuthEvent.EventType.ACCESS_GRANTED,
+        ip_address=request.META.get("REMOTE_ADDR"),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+        details={"sso_ticket_issued": True, "product": product.code, "jti": jti, "exp": payload["exp"]},
+    )
+
+    query = {"ticket": ticket}
+    if next_path:
+        query["next"] = next_path
+    callback_url = f"{product.product_url.rstrip('/')}/auth/sso/callback?{urlencode(query)}"
+    return redirect(callback_url)
 
 
 @staff_member_required
