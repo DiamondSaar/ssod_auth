@@ -31,6 +31,17 @@ ALLOWED_HOSTS = env.list(
     default=["localhost", "127.0.0.1"],
 )
 
+# Docker-internal hostname Dominex uses to call the admin write-bridge
+# directly (accounts/api.py::admin_update_product). Not the plain service
+# name "ssod_auth_web" - Django's Host-header validation (RFC 1034/1035)
+# rejects underscores outright regardless of ALLOWED_HOSTS, so
+# docker-compose.yml gives this service a hyphenated network alias
+# instead. Internal-only (not reachable from outside the docker network),
+# fixed in every environment using this compose file, so always safe to
+# allow regardless of what DJANGO_ALLOWED_HOSTS is set to.
+if "ssod-auth-internal" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("ssod-auth-internal")
+
 CSRF_TRUSTED_ORIGINS = env.list(
     "DJANGO_CSRF_TRUSTED_ORIGINS",
     default=["https://auth.ssod.pro"],
@@ -271,3 +282,20 @@ DOMINEX_CONNECTED_MODE = env.bool("DOMINEX_CONNECTED_MODE", default=True)
 # (see dominex/docs/module-interactions.md "Credential, Session, Token and
 # API Key Lifecycle"). Must match Dominex's SSO_TICKET_SECRET.
 SSO_TICKET_SECRET = env("SSO_TICKET_SECRET", default="dev-sso-ticket-secret-change-me")
+
+# Write-through admin bridge: Dominex's "Настройки -> Продукты и подключаемые
+# модули" screen pushes Product field changes (sso_enabled etc.) here via
+# accounts.api.admin_update_product - the one server-to-server call that
+# goes Dominex -> ssod_auth instead of the usual other way round (see
+# biographia TZ section 13). Own secret, not reused from DOMINEX_API_KEY
+# or SSO_TICKET_SECRET - same "one secret per consumer/direction" rule
+# this whole mechanism exists to enforce.
+DOMINEX_ADMIN_API_KEY = env("DOMINEX_ADMIN_API_KEY", default="dev-admin-bridge-key-change-me")
+
+# Personal-zone key registry write channel: Biographia's backend stores/
+# fetches a user's wrapped master key here (biographia TZ section 4) -
+# never the plaintext key, password, or seed phrase, only ciphertext +
+# public KDF params. New direction again (Biographia -> ssod_auth, not
+# the usual other way), own secret again - same rule as
+# DOMINEX_ADMIN_API_KEY above, not reused from it or from anything else.
+BIOGRAPHIA_KEY_API_KEY = env("BIOGRAPHIA_KEY_API_KEY", default="dev-biographia-key-api-change-me")

@@ -10,6 +10,7 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from .models import AuthEvent, Product, UserProductAccess, Organization, ProductRole, AccessClass
 from .forms import FirstPasswordChangeForm, SSODAccessKeyCreateForm
+from accounts.services.dominex_client import fetch_oracle_status
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
@@ -190,11 +191,14 @@ def security(request):
         user=request.user
     ).order_by("-created_at")
 
+    oracle_status = fetch_oracle_status(request.user.username)
+
     return render(
         request,
         "accounts/security.html",
         {
             "credentials": credentials,
+            "oracle_status": oracle_status,
         },
     )
 

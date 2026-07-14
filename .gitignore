@@ -1,3 +1,5 @@
 .env
 app/staticfiles/
 app/mediafiles/
+__pycache__/
+*.pyc

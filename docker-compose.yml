@@ -26,7 +26,14 @@ services:
       - ./app:/app
 
     networks:
-      - ssod_auth_net
+      ssod_auth_net:
+        # Django's Host-header validation (RFC 1034/1035) rejects
+        # underscores outright, so "ssod_auth_web" itself can never appear
+        # in a Host header no matter what's in ALLOWED_HOSTS - this hyphenated
+        # alias is what Dominex's admin write-bridge actually calls (see
+        # SSOD_AUTH_INTERNAL_URL in dominex/app/config.py).
+        aliases:
+          - ssod-auth-internal
 
 volumes:
   ssod_auth_pgdata:

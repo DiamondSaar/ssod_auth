@@ -872,6 +872,162 @@ class SSODAccessKey(TimeStampedModel):
     def __str__(self):
         return f"{self.user}: {self.name}"
 
+
+class WebAuthnCredential(TimeStampedModel):
+    """
+    WebAuthn-креденшл, зарегистрированный специально для PRF-разблокировки
+    личной зоны Biographia (biographia TZ раздел 4, "провайдер ключа —
+    подключаемый... есть FIDO2-токен → ключ устройства выводится из
+    токена (WebAuthn PRF)").
+
+    Отдельная таблица от django_otp_webauthn (который уже используется
+    в ssod_auth для входа/2FA) - та инфраструктура заточена под
+    ceremony входа, не под извлечение сырого PRF-вывода для обёртки
+    произвольного ключа; тот же физический токен может держать оба
+    креденшла одновременно, это не конфликт.
+
+    Публичный ключ + счётчик подписей - это ровно то, что нужно для
+    проверки будущих assertion (стандартная защита от клонирования
+    токена по WebAuthn spec). PRF-секрет сюда никогда не попадает -
+    он существует только на самом токене/платформе и вычисляется
+    заново при каждой ceremony.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="webauthn_credentials",
+        verbose_name="Пользователь",
+    )
+
+    credential_id = models.CharField(
+        max_length=255,
+        unique=True,
+        verbose_name="Credential ID (base64url)",
+    )
+    public_key = models.TextField(
+        verbose_name="Публичный ключ (COSE, base64url)",
+    )
+    sign_count = models.PositiveIntegerField(
+        default=0,
+        verbose_name="Счётчик подписей",
+    )
+    transports = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="Транспорты",
+    )
+    label = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Название",
+        help_text="Например: YubiKey 5, Touch ID MacBook",
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Последнее использование",
+    )
+
+    class Meta:
+        verbose_name = "WebAuthn-креденшл (Biographia)"
+        verbose_name_plural = "WebAuthn-креденшлы (Biographia)"
+
+    def __str__(self):
+        return f"{self.user}: {self.label or self.credential_id[:12]}"
+
+
+class PersonalKeyMaterial(TimeStampedModel):
+    """
+    Реестр личного мастер-ключа (biographia TZ раздел 4).
+
+    Это брокер/учётчик, не хранилище рабочего секрета: здесь лежит
+    только зашифрованная (wrapped) копия мастер-ключа пользователя плюс
+    публичные параметры, которыми конкретное устройство сможет её
+    расшифровать локально, зная пароль/seed-фразу или предъявив нужный
+    WebAuthn-токен. Сам пароль, сама seed-фраза, PRF-секрет и
+    расшифрованный мастер-ключ сюда никогда не попадают - сервер
+    физически не может прочитать содержимое личной зоны.
+
+    Несколько записей на пользователя, по одной на каждый способ
+    разблокировки (`provider`) - пароль и один или несколько
+    WebAuthn-токенов сосуществуют, каждый оборачивает тот же самый
+    мастер-ключ независимо (раздел 4: "уже подключённое устройство
+    подтверждает новое" - здесь это выражено как несколько параллельных
+    обёрток одного ключа, а не как цепочка подтверждений). Было
+    OneToOneField до этого прохода - см. миграцию, переносящую
+    единственную существовавшую запись на provider="password" без
+    потери данных.
+    """
+
+    PROVIDER_PASSWORD = "password"
+    PROVIDER_WEBAUTHN_PRF = "webauthn_prf"
+    PROVIDER_CHOICES = [
+        (PROVIDER_PASSWORD, "Пароль + seed-фраза"),
+        (PROVIDER_WEBAUTHN_PRF, "WebAuthn PRF (токен/passkey)"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="personal_key_materials",
+        verbose_name="Пользователь",
+    )
+    provider = models.CharField(
+        max_length=20,
+        choices=PROVIDER_CHOICES,
+        default=PROVIDER_PASSWORD,
+        verbose_name="Способ разблокировки",
+    )
+    label = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Название",
+    )
+    webauthn_credential = models.ForeignKey(
+        WebAuthnCredential,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="key_materials",
+        verbose_name="Связанный WebAuthn-креденшл",
+        help_text="Заполнено только для provider=webauthn_prf.",
+    )
+
+    wrapped_master_key = models.TextField(
+        verbose_name="Зашифрованный мастер-ключ (base64)",
+    )
+    nonce = models.CharField(
+        max_length=64,
+        verbose_name="Nonce AEAD (base64)",
+    )
+
+    kdf_algorithm = models.CharField(
+        max_length=20,
+        default="argon2id",
+        verbose_name="Алгоритм KDF",
+    )
+    kdf_salt = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        verbose_name="Соль KDF (base64)",
+    )
+    # Только для provider=password (Argon2id) - null для webauthn_prf,
+    # где обёрточный ключ выводится из PRF-вывода через HKDF, без этих
+    # параметров вообще.
+    kdf_memory_kib = models.PositiveIntegerField(null=True, blank=True, verbose_name="Argon2id: память (KiB)")
+    kdf_iterations = models.PositiveIntegerField(null=True, blank=True, verbose_name="Argon2id: итерации")
+    kdf_parallelism = models.PositiveIntegerField(null=True, blank=True, verbose_name="Argon2id: параллелизм")
+
+    class Meta:
+        verbose_name = "Материал личного ключа"
+        verbose_name_plural = "Материалы личных ключей"
+
+    def __str__(self):
+        return f"Ключ пользователя {self.user} ({self.get_provider_display()})"
+
+
 class SystemRole(TimeStampedModel):
     """
     Роль пользователя в системе Auth Center.
@@ -931,6 +1087,8 @@ class AuthEvent(TimeStampedModel):
         KEY_LOGIN_FAILED = "key_login_failed", "Вход по ключу неуспешен"
         ACCESS_DENIED = "access_denied", "Доступ запрещен"
         ACCESS_GRANTED = "access_granted", "Доступ разрешен"
+        PRODUCT_CONFIG_SYNCED = "product_config_synced", "Конфигурация продукта синхронизирована из Dominex"
+        PERSONAL_KEY_MATERIAL_UPDATED = "personal_key_material_updated", "Материал личного ключа обновлён (Biographia)"
 
     uuid = models.UUIDField(
         default=uuid.uuid4,

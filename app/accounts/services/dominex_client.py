@@ -74,3 +74,34 @@ def verify_dominex_credentials(username, password, timeout=5):
     except ValueError:
         logger.warning("Dominex credential verification for %s returned invalid JSON", username, exc_info=True)
         return None
+
+
+def fetch_oracle_status(username, timeout=5):
+    """Read-only crypto-oracle attempt-log summary for security.html
+    (biographia TZ: Dominex's rate-limited HMAC oracle protecting the
+    personal-zone password provider against offline brute force). Same
+    best-effort, log-and-return-None, never-raise contract as
+    fetch_user_projection() above - Dominex is the source of truth for
+    this data, ssod_auth only displays it.
+    """
+
+    url = f"{settings.DOMINEX_API_BASE_URL}/api/v1/oracle/status/{username}"
+    try:
+        response = requests.get(
+            url,
+            headers={"X-Dominex-Api-Key": settings.DOMINEX_API_KEY},
+            timeout=timeout,
+        )
+    except requests.RequestException:
+        logger.warning("Dominex oracle status request failed for %s", username, exc_info=True)
+        return None
+
+    if response.status_code != 200:
+        logger.warning("Dominex oracle status for %s returned %s", username, response.status_code)
+        return None
+
+    try:
+        return response.json()
+    except ValueError:
+        logger.warning("Dominex oracle status for %s returned invalid JSON", username, exc_info=True)
+        return None
