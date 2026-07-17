@@ -169,8 +169,41 @@ admin.site.register(ProductPermission)
 admin.site.register(ProductRole)
 admin.site.register(UserEmail)
 admin.site.register(UserPhone)
-admin.site.register(ServiceClient)
-admin.site.register(ServiceClientGrant)
 admin.site.register(UserMessenger)
 admin.site.register(SSODAccessKey)
-admin.site.register(AuthEvent)
+
+
+@admin.register(ServiceClient)
+class ServiceClientAdmin(admin.ModelAdmin):
+    """last_used_at is the at-a-glance "is this actually being called"
+    indicator - updates on every successful /api/v1/service-token/
+    request for this client."""
+
+    list_display = ("code", "name", "is_active", "last_used_at", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("code", "name")
+    readonly_fields = ("last_used_at",)
+
+
+@admin.register(ServiceClientGrant)
+class ServiceClientGrantAdmin(admin.ModelAdmin):
+    list_display = ("service_client", "audience", "is_active")
+    list_filter = ("audience", "is_active")
+
+
+@admin.register(AuthEvent)
+class AuthEventAdmin(admin.ModelAdmin):
+    """Read-only journal - see it, don't edit it. list_filter on
+    event_type is the fastest way to isolate service_token_issued/
+    service_token_denied rows from the rest of the login/access log."""
+
+    list_display = ("created_at", "event_type", "user", "ip_address")
+    list_filter = ("event_type",)
+    search_fields = ("user__username", "ip_address", "details")
+    readonly_fields = [f.name for f in AuthEvent._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
