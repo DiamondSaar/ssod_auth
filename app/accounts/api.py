@@ -2,13 +2,30 @@ import hashlib
 import hmac
 import json
 
+import jwt
 from django.conf import settings
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from accounts.models import AuthEvent, CustomUser, PersonalKeyMaterial, Product, SSODAccessKey, WebAuthnCredential
+from accounts.models import (
+    AuthEvent,
+    CustomUser,
+    PersonalKeyMaterial,
+    Product,
+    ServiceClient,
+    ServiceClientGrant,
+    SSODAccessKey,
+    WebAuthnCredential,
+)
+
+# Короткоживущий service-токен для межсервисных (машина-машина) вызовов -
+# тот же принцип, что и SSO_TICKET_LIFETIME_SECONDS в views.py::sso_authorize
+# (тоже PyJWT/HS256), но отдельный секрет (M2M_TOKEN_SECRET) и без jti/
+# anti-replay - это bearer-токен для повторных API-вызовов в течение
+# своего TTL, а не одноразовая ссылка-редирект.
+SERVICE_TOKEN_LIFETIME_SECONDS = 300
 
 
 @csrf_exempt
@@ -407,5 +424,82 @@ def update_webauthn_sign_count(request, credential_id):
     credential.sign_count = payload.get("sign_count", credential.sign_count)
     credential.last_used_at = timezone.now()
     credential.save(update_fields=["sign_count", "last_used_at", "updated_at"])
+
+
+@csrf_exempt
+@require_POST
+def issue_service_token(request):
+    """
+    Единая точка выдачи короткоживущих service-токенов для межсервисной
+    (машина-машина) авторизации в экосистеме - см. dominex/docs/
+    module-interactions.md, "Service-to-service auth for new modules".
+    Любой новый модуль, которому нужно вызывать Dominex (или другой
+    внутренний сервис), получает здесь Bearer-токен вместо того, чтобы
+    заводить свой статичный ключ напрямую в целевом сервисе.
+
+    {"client_id": "...", "client_secret": "...", "audience": "dominex"}
+    -> {"access_token": "...", "expires_in": 300}
+
+    Каждая попытка (успешная и нет) логируется в AuthEvent - это и есть
+    требуемый централизованный журнал выдачи.
+    """
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    client_id = (payload.get("client_id") or "").strip()
+    client_secret = payload.get("client_secret") or ""
+    audience = (payload.get("audience") or "").strip()
+
+    def _deny(reason):
+        AuthEvent.objects.create(
+            user=None,
+            event_type=AuthEvent.EventType.SERVICE_TOKEN_DENIED,
+            ip_address=request.META.get("REMOTE_ADDR"),
+            user_agent=request.META.get("HTTP_USER_AGENT", ""),
+            details={"client_id": client_id, "audience": audience, "reason": reason},
+        )
+        return JsonResponse({"error": reason}, status=401)
+
+    if not client_id or not client_secret or not audience:
+        return _deny("client_id_secret_audience_required")
+
+    client = ServiceClient.objects.filter(code=client_id, is_active=True).first()
+    if client is None:
+        return _deny("unknown_client")
+
+    provided_hash = hashlib.sha256(client_secret.encode("utf-8")).hexdigest()
+    if not hmac.compare_digest(provided_hash, client.client_secret_hash):
+        return _deny("invalid_secret")
+
+    grant_exists = ServiceClientGrant.objects.filter(
+        service_client=client, audience=audience, is_active=True
+    ).exists()
+    if not grant_exists:
+        return _deny("audience_not_granted")
+
+    now = timezone.now()
+    token_payload = {
+        "sub": client.code,
+        "aud": audience,
+        "typ": "service",
+        "iat": int(now.timestamp()),
+        "exp": int(now.timestamp()) + SERVICE_TOKEN_LIFETIME_SECONDS,
+    }
+    token = jwt.encode(token_payload, settings.M2M_TOKEN_SECRET, algorithm="HS256")
+
+    client.last_used_at = now
+    client.save(update_fields=["last_used_at", "updated_at"])
+
+    AuthEvent.objects.create(
+        user=None,
+        event_type=AuthEvent.EventType.SERVICE_TOKEN_ISSUED,
+        ip_address=request.META.get("REMOTE_ADDR"),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+        details={"client_id": client.code, "audience": audience, "exp": token_payload["exp"]},
+    )
+
+    return JsonResponse({"access_token": token, "expires_in": SERVICE_TOKEN_LIFETIME_SECONDS})
 
     return JsonResponse({"ok": True})

@@ -1089,6 +1089,8 @@ class AuthEvent(TimeStampedModel):
         ACCESS_GRANTED = "access_granted", "Доступ разрешен"
         PRODUCT_CONFIG_SYNCED = "product_config_synced", "Конфигурация продукта синхронизирована из Dominex"
         PERSONAL_KEY_MATERIAL_UPDATED = "personal_key_material_updated", "Материал личного ключа обновлён (Biographia)"
+        SERVICE_TOKEN_ISSUED = "service_token_issued", "Service-токен выдан"
+        SERVICE_TOKEN_DENIED = "service_token_denied", "Service-токен отклонён"
 
     uuid = models.UUIDField(
         default=uuid.uuid4,
@@ -1136,4 +1138,100 @@ class AuthEvent(TimeStampedModel):
 
     def __str__(self):
         return f"{self.created_at}: {self.event_type}"
+
+
+class ServiceClient(TimeStampedModel):
+    """
+    Машинный клиент экосистемы (не живой пользователь) - модуль вроде
+    atb-portal, которому нужен доступ к API других сервисов (Dominex и
+    т.д.). ssod_auth - единственная точка, выдающая короткоживущие
+    service-токены (см. api.issue_service_token) по этим учётным данным;
+    сами сервисы (Dominex) больше не должны выдавать свои собственные
+    статичные ключи новым потребителям - см. dominex/docs/
+    module-interactions.md, "Service-to-service auth for new modules".
+
+    Секрет хранится только как SHA256-фингерпринт (тот же принцип, что у
+    SSODAccessKey.fingerprint_sha256) - открытый текст показывается
+    только один раз в момент создания, в базе не остаётся.
+    """
+
+    code = models.SlugField(
+        max_length=100,
+        unique=True,
+        verbose_name="Код клиента",
+        help_text="Например: atb_portal",
+    )
+
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Название",
+    )
+
+    client_secret_hash = models.CharField(
+        max_length=128,
+        verbose_name="SHA256 фингерпринт секрета",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+    )
+
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Последнее использование",
+    )
+
+    comment = models.TextField(
+        blank=True,
+        verbose_name="Комментарий",
+    )
+
+    class Meta:
+        verbose_name = "Машинный клиент (ServiceClient)"
+        verbose_name_plural = "Машинные клиенты (ServiceClient)"
+        ordering = ["code"]
+
+    def __str__(self):
+        return self.code
+
+
+class ServiceClientGrant(TimeStampedModel):
+    """
+    Разрешение ServiceClient запрашивать токен на конкретный audience
+    (код целевого сервиса, например "dominex") - один клиент может иметь
+    несколько grant'ов на разные сервисы. Отсутствие активного grant'а
+    для запрошенного audience = отказ в выдаче токена, даже если сам
+    client_id/секрет верны.
+    """
+
+    service_client = models.ForeignKey(
+        ServiceClient,
+        on_delete=models.CASCADE,
+        related_name="grants",
+        verbose_name="Клиент",
+    )
+
+    audience = models.SlugField(
+        max_length=100,
+        verbose_name="Audience (целевой сервис)",
+        help_text="Например: dominex",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+    )
+
+    class Meta:
+        verbose_name = "Grant машинного клиента"
+        verbose_name_plural = "Grant'ы машинных клиентов"
+        ordering = ["service_client", "audience"]
+        constraints = [
+            models.UniqueConstraint(fields=["service_client", "audience"], name="uq_service_client_grant"),
+        ]
+
+    def __str__(self):
+        return f"{self.service_client.code} -> {self.audience}"
 

@@ -10,6 +10,8 @@ from .models import (
     Product,
     ProductPermission,
     ProductRole,
+    ServiceClient,
+    ServiceClientGrant,
     SSODAccessKey,
     UserEmail,
     UserMessenger,
@@ -167,6 +169,8 @@ admin.site.register(ProductPermission)
 admin.site.register(ProductRole)
 admin.site.register(UserEmail)
 admin.site.register(UserPhone)
+admin.site.register(ServiceClient)
+admin.site.register(ServiceClientGrant)
 admin.site.register(UserMessenger)
 admin.site.register(SSODAccessKey)
 admin.site.register(AuthEvent)

@@ -283,6 +283,18 @@ DOMINEX_CONNECTED_MODE = env.bool("DOMINEX_CONNECTED_MODE", default=True)
 # API Key Lifecycle"). Must match Dominex's SSO_TICKET_SECRET.
 SSO_TICKET_SECRET = env("SSO_TICKET_SECRET", default="dev-sso-ticket-secret-change-me")
 
+# Shared secret for machine-to-machine service tokens (accounts.api.
+# issue_service_token) - the universal auth mechanism any new ecosystem
+# module uses to call Dominex or another internal service, instead of a
+# static per-consumer key issued directly by the target service (see
+# dominex/docs/module-interactions.md "Service-to-service auth for new
+# modules"). Deliberately separate from SSO_TICKET_SECRET (human login
+# tickets) - same "one secret per consumer/direction" rule as everything
+# else on this page; a compromised M2M secret must not also let someone
+# forge a human SSO ticket, or vice versa. Must match Dominex's own
+# M2M_TOKEN_SECRET exactly.
+M2M_TOKEN_SECRET = env("M2M_TOKEN_SECRET", default="dev-m2m-token-secret-change-me")
+
 # Write-through admin bridge: Dominex's "Настройки -> Продукты и подключаемые
 # модули" screen pushes Product field changes (sso_enabled etc.) here via
 # accounts.api.admin_update_product - the one server-to-server call that
