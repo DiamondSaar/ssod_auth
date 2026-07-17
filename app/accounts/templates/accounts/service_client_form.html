@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация клиента — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Интеграции</div>
+
+    <h1 class="admin-title">Зарегистрировать машинного клиента</h1>
+
+    <p class="admin-subtitle">
+        Секрет будет показан только один раз сразу после создания. После добавления не забудьте выдать
+        клиенту grant на нужный audience (целевой сервис, например «dominex»).
+    </p>
+
+    <form method="post" class="form-card">
+        {% csrf_token %}
+
+        {% for field in form %}
+            <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+
+                {% if field.help_text %}
+                    <div class="form-help">{{ field.help_text }}</div>
+                {% endif %}
+
+                {% if field.errors %}
+                    <div class="form-error">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Зарегистрировать</button>
+            <a class="button secondary" href="{% url 'accounts:account_integrations' %}">Отмена</a>
+        </div>
+    </form>
+
+</section>
+{% endblock %}

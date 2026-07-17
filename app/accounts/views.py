@@ -8,8 +8,22 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import redirect, render
-from .models import AuthEvent, Product, UserProductAccess, Organization, ProductRole, AccessClass
-from .forms import FirstPasswordChangeForm, SSODAccessKeyCreateForm
+from .models import (
+    AuthEvent,
+    Product,
+    ServiceClient,
+    ServiceClientGrant,
+    UserProductAccess,
+    Organization,
+    ProductRole,
+    AccessClass,
+)
+from .forms import (
+    FirstPasswordChangeForm,
+    ServiceClientCreateForm,
+    ServiceClientGrantCreateForm,
+    SSODAccessKeyCreateForm,
+)
 from accounts.services.dominex_client import fetch_oracle_status
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -439,3 +453,140 @@ def roles_rights(request):
             "active_access_map": active_access_map,
         },
     )
+
+
+@staff_member_required
+def account_integrations(request):
+    """
+    Админская страница "Интеграции" - управление ServiceClient/
+    ServiceClientGrant (межсервисная авторизация, см. accounts.api.
+    issue_service_token) и журнал их использования, вместо Django admin.
+    Задел под будущие элементы, касающиеся внешних интеграций с другими
+    модулями экосистемы - см. dominex/docs/module-interactions.md,
+    "Service-to-service auth for new modules".
+    """
+
+    clients = ServiceClient.objects.prefetch_related("grants").order_by("code")
+    grant_form = ServiceClientGrantCreateForm()
+    recent_events = AuthEvent.objects.filter(
+        event_type__in=[AuthEvent.EventType.SERVICE_TOKEN_ISSUED, AuthEvent.EventType.SERVICE_TOKEN_DENIED]
+    ).order_by("-created_at")[:30]
+
+    return render(
+        request,
+        "accounts/account_integrations.html",
+        {
+            "clients": clients,
+            "grant_form": grant_form,
+            "recent_events": recent_events,
+        },
+    )
+
+
+@staff_member_required
+def service_client_create(request):
+    """Регистрация нового ServiceClient - секрет генерируется здесь и
+    показывается один раз (тот же принцип, что и access_key_create для
+    SSODAccessKey), в базе остаётся только SHA256-фингерпринт."""
+
+    generated_secret = None
+
+    if request.method == "POST":
+        form = ServiceClientCreateForm(request.POST)
+
+        if form.is_valid():
+            code = form.cleaned_data["code"]
+            if ServiceClient.objects.filter(code=code).exists():
+                form.add_error("code", "Клиент с таким кодом уже существует.")
+            else:
+                generated_secret = secrets.token_urlsafe(32)
+                fingerprint = hashlib.sha256(generated_secret.encode("utf-8")).hexdigest()
+
+                ServiceClient.objects.create(
+                    code=code,
+                    name=form.cleaned_data["name"],
+                    client_secret_hash=fingerprint,
+                    is_active=True,
+                )
+
+                return render(
+                    request,
+                    "accounts/service_client_created.html",
+                    {
+                        "code": code,
+                        "generated_secret": generated_secret,
+                    },
+                )
+    else:
+        form = ServiceClientCreateForm()
+
+    return render(
+        request,
+        "accounts/service_client_form.html",
+        {
+            "form": form,
+        },
+    )
+
+
+@staff_member_required
+def service_client_toggle(request, client_id):
+    """Включает/отключает ServiceClient целиком - отключённый клиент не
+    сможет получить новый токен ни на один audience (уже выданные
+    короткоживущие токены продолжат действовать до истечения exp)."""
+
+    if request.method == "POST":
+        client = ServiceClient.objects.get(id=client_id)
+        client.is_active = not client.is_active
+        client.save(update_fields=["is_active", "updated_at"])
+        messages.success(
+            request,
+            f"Клиент «{client.code}» {'включён' if client.is_active else 'отключён'}.",
+        )
+
+    return redirect("accounts:account_integrations")
+
+
+@staff_member_required
+def service_client_grant_create(request, client_id):
+    """Добавляет ServiceClientGrant (разрешение на audience) существующему
+    клиенту - форма встроена прямо в строку клиента на account_integrations."""
+
+    client = ServiceClient.objects.get(id=client_id)
+
+    if request.method == "POST":
+        form = ServiceClientGrantCreateForm(request.POST)
+
+        if form.is_valid():
+            audience = form.cleaned_data["audience"]
+            grant, created = ServiceClientGrant.objects.get_or_create(
+                service_client=client,
+                audience=audience,
+                defaults={"is_active": True},
+            )
+            if not created and not grant.is_active:
+                grant.is_active = True
+                grant.save(update_fields=["is_active", "updated_at"])
+            messages.success(request, f"Grant «{audience}» добавлен клиенту «{client.code}».")
+        else:
+            messages.error(request, "Некорректный audience.")
+
+    return redirect("accounts:account_integrations")
+
+
+@staff_member_required
+def service_client_grant_toggle(request, grant_id):
+    """Включает/отключает конкретный grant, не трогая остальные у того
+    же клиента."""
+
+    if request.method == "POST":
+        grant = ServiceClientGrant.objects.get(id=grant_id)
+        grant.is_active = not grant.is_active
+        grant.save(update_fields=["is_active", "updated_at"])
+        messages.success(
+            request,
+            f"Grant «{grant.audience}» клиента «{grant.service_client.code}» "
+            f"{'включён' if grant.is_active else 'отключён'}.",
+        )
+
+    return redirect("accounts:account_integrations")

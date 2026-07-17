@@ -37,6 +37,13 @@ account-page
             <p>Создание и просмотр заявок.</p>
         </a>
 
+        {% if request.user.is_staff %}
+            <a class="admin-card" href="{% url 'accounts:account_integrations' %}">
+                <h2>Интеграции</h2>
+                <p>Машинные клиенты, service-токены и журнал межсервисных вызовов.</p>
+            </a>
+        {% endif %}
+
     </div>
 
     <div class="account-actions-row">

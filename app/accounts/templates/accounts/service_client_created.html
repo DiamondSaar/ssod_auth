@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Клиент зарегистрирован — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Клиент зарегистрирован</div>
+
+    <h1 class="admin-title">Сохраните секрет</h1>
+
+    <p class="admin-subtitle">
+        Этот секрет отображается только сейчас. После ухода со страницы восстановить его будет невозможно —
+        только сбросить, зарегистрировав клиента заново. Положите его в <code>.env</code> модуля
+        (<code>M2M_CLIENT_ID</code>/<code>M2M_CLIENT_SECRET</code> у atb-portal — по аналогии для новых модулей).
+    </p>
+
+    <div class="form-card">
+        <div class="form-field">
+            <label>Код клиента (client_id)</label>
+            <input class="form-input" value="{{ code }}" readonly>
+        </div>
+
+        <div class="form-field">
+            <label>Секрет (client_secret)</label>
+            <textarea class="form-input form-textarea" rows="3" readonly>{{ generated_secret }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <a class="button primary" href="{% url 'accounts:account_integrations' %}">
+                К списку интеграций
+            </a>
+        </div>
+    </div>
+
+</section>
+{% endblock %}

@@ -49,4 +49,22 @@ urlpatterns = [
         name="roles_rights",
     ),
 
+    path("integrations/", views.account_integrations, name="account_integrations"),
+    path("integrations/clients/create/", views.service_client_create, name="service_client_create"),
+    path(
+        "integrations/clients/<int:client_id>/toggle/",
+        views.service_client_toggle,
+        name="service_client_toggle",
+    ),
+    path(
+        "integrations/clients/<int:client_id>/grants/create/",
+        views.service_client_grant_create,
+        name="service_client_grant_create",
+    ),
+    path(
+        "integrations/grants/<int:grant_id>/toggle/",
+        views.service_client_grant_toggle,
+        name="service_client_grant_toggle",
+    ),
+
 ]
