@@ -29,6 +29,23 @@ Full dated history/reasoning for everything: `dominex/PROJECT_CONTEXT.md`.
   Docker-internal DNS name - both compose stacks share the `ssod_auth_net`
   Docker network for this), `DOMINEX_API_KEY`.
 
+## Service-to-service auth for any new module (added 2026-07-17)
+
+SSOD Auth is now the mandatory issuer of machine-to-machine tokens for
+**every** module in the ecosystem that needs to call Dominex (or any other
+internal service) - no module holds a static key issued directly by the
+target service anymore. New `ServiceClient`/`ServiceClientGrant` models
+(`accounts/models.py`), Django-admin managed; `POST /api/v1/service-token/`
+(`accounts/api.py::issue_service_token`) mints a 5-minute JWT (own secret,
+`M2M_TOKEN_SECRET`, separate from `SSO_TICKET_SECRET`) that the target
+service verifies statelessly. Every issuance/denial logs to `AuthEvent`.
+atb-portal is the reference implementation (`ServiceClient.code="atb_portal"`,
+grant on `audience="dominex"`, replacing its old `ExternalSource`/
+`IdentityApiConsumer` static keys). Full mechanism, registration steps for
+a new module, and the rationale for accepting "SSOD Auth down = all
+inter-module traffic stops" as a deliberate tradeoff: `dominex/docs/
+module-interactions.md`, "Service-to-service auth for new modules".
+
 ## What's still local-only / not yet built
 
 - No SSO/session handoff - logging into SSOD Auth and logging into Dominex
