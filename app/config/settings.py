@@ -295,6 +295,18 @@ SSO_TICKET_SECRET = env("SSO_TICKET_SECRET", default="dev-sso-ticket-secret-chan
 # M2M_TOKEN_SECRET exactly.
 M2M_TOKEN_SECRET = env("M2M_TOKEN_SECRET", default="dev-m2m-token-secret-change-me")
 
+# ─── Авторазвёртывание портала (accounts.views.portal_deploy) ──────────────
+# Репозиторий кода портала и read-only credential для git clone на целевой
+# VM (deploy-токен/PAT). Пустой PORTAL_DEPLOY_TOKEN => clone анонимный (для
+# публичного репо); для приватного нужен токен.
+PORTAL_REPO_URL = env("PORTAL_REPO_URL", default="https://github.com/DiamondSaar/atb-portal.git")
+PORTAL_DEPLOY_TOKEN = env("PORTAL_DEPLOY_TOKEN", default="")
+# Публичные адреса экосистемы, которые прописываются в .env развёртываемого
+# портала (портал на чужой VM обращается к ним по интернету, НЕ по docker-
+# internal DOMINEX_API_BASE_URL выше, который для собственных вызовов ssod_auth).
+ECOSYSTEM_DOMINEX_PUBLIC_URL = env("ECOSYSTEM_DOMINEX_PUBLIC_URL", default="https://dominex.ssod.pro")
+ECOSYSTEM_SSOD_AUTH_PUBLIC_URL = env("ECOSYSTEM_SSOD_AUTH_PUBLIC_URL", default="https://auth.ssod.pro")
+
 # Write-through admin bridge: Dominex's "Настройки -> Продукты и подключаемые
 # модули" screen pushes Product field changes (sso_enabled etc.) here via
 # accounts.api.admin_update_product - the one server-to-server call that

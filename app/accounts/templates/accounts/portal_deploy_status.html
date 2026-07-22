@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Развёртывание {{ job.org_code }} — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Развёртывание</div>
+
+    <h1 class="admin-title">Портал «{{ job.org_code }}»</h1>
+
+    <p class="admin-subtitle">
+        Цель: {{ job.target_user }}@{{ job.target_host }}:{{ job.target_port }}.
+        Статус: <span id="deploy-status" class="status-pill">{{ job.get_status_display }}</span>
+    </p>
+
+    <div class="table-card">
+        <pre id="deploy-log" style="white-space:pre-wrap;font-size:13px;margin:0;max-height:60vh;overflow:auto">{{ job.log }}</pre>
+    </div>
+
+    <div class="account-actions-row">
+        <a class="button secondary" href="{% url 'accounts:account_integrations' %}">К интеграциям</a>
+    </div>
+
+</section>
+
+<script>
+(function () {
+    var url = "{% url 'accounts:portal_deploy_log' job.uuid %}";
+    var logEl = document.getElementById("deploy-log");
+    var statusEl = document.getElementById("deploy-status");
+    var timer = setInterval(function () {
+        fetch(url).then(function (r) { return r.json(); }).then(function (d) {
+            logEl.textContent = d.log;
+            logEl.scrollTop = logEl.scrollHeight;
+            statusEl.textContent = d.status_display;
+            statusEl.className = "status-pill " + (d.status === "success" ? "active" : (d.status === "failed" ? "neutral" : ""));
+            if (d.finished) { clearInterval(timer); }
+        }).catch(function () {});
+    }, 3000);
+})();
+</script>
+{% endblock %}

@@ -5,6 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     AuthEvent,
     CustomUser,
+    DeployJob,
     Organization,
     Position,
     Product,
@@ -189,6 +190,16 @@ class ServiceClientAdmin(admin.ModelAdmin):
 class ServiceClientGrantAdmin(admin.ModelAdmin):
     list_display = ("service_client", "audience", "is_active")
     list_filter = ("audience", "is_active")
+
+
+@admin.register(DeployJob)
+class DeployJobAdmin(admin.ModelAdmin):
+    list_display = ("org_code", "target_host", "status", "created_by", "created_at")
+    list_filter = ("status",)
+    readonly_fields = [f.name for f in DeployJob._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
 
 
 @admin.register(AuthEvent)

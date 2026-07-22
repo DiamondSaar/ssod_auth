@@ -1,15 +1,22 @@
 import uuid as uuid_lib
+import json
+import os
+import subprocess
+import sys
+import tempfile
 from urllib.parse import urlencode
 
 import jwt
+import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from .models import (
     AuthEvent,
+    DeployJob,
     Product,
     ServiceClient,
     ServiceClientGrant,
@@ -20,6 +27,7 @@ from .models import (
 )
 from .forms import (
     FirstPasswordChangeForm,
+    PortalDeployForm,
     ServiceClientCreateForm,
     ServiceClientGrantCreateForm,
     SSODAccessKeyCreateForm,
@@ -471,6 +479,7 @@ def account_integrations(request):
     recent_events = AuthEvent.objects.filter(
         event_type__in=[AuthEvent.EventType.SERVICE_TOKEN_ISSUED, AuthEvent.EventType.SERVICE_TOKEN_DENIED]
     ).order_by("-created_at")[:30]
+    deploy_jobs = DeployJob.objects.order_by("-created_at")[:10]
 
     return render(
         request,
@@ -479,6 +488,7 @@ def account_integrations(request):
             "clients": clients,
             "grant_form": grant_form,
             "recent_events": recent_events,
+            "deploy_jobs": deploy_jobs,
         },
     )
 
@@ -590,3 +600,176 @@ def service_client_grant_toggle(request, grant_id):
         )
 
     return redirect("accounts:account_integrations")
+
+
+def _ensure_service_client(org_code):
+    """Создаёт (или переиспользует) ServiceClient <org>_portal + grant на
+    dominex, возвращает (client, plaintext_secret). Секрет генерируется
+    заново при каждом деплое (в БД только хэш)."""
+    code = f"{org_code}_portal"
+    secret = secrets.token_urlsafe(32)
+    fingerprint = hashlib.sha256(secret.encode("utf-8")).hexdigest()
+    client, _ = ServiceClient.objects.get_or_create(
+        code=code, defaults={"name": f"{org_code} portal", "client_secret_hash": fingerprint, "is_active": True}
+    )
+    client.client_secret_hash = fingerprint
+    client.is_active = True
+    client.save(update_fields=["client_secret_hash", "is_active", "updated_at"])
+    ServiceClientGrant.objects.get_or_create(
+        service_client=client, audience="dominex", defaults={"is_active": True}
+    )
+    return client, secret
+
+
+def _ensure_dominex_source(org_code):
+    """Создаёт ExternalSource <org>_ad в Dominex через API (идемпотентно).
+    Использует X-Dominex-Api-Key (IdentityApiConsumer ssod_auth). Поднимает
+    исключение при недоступности - деплой не начнётся с битой интеграцией."""
+    code = f"{org_code}_ad"
+    resp = requests.post(
+        f"{settings.DOMINEX_API_BASE_URL.rstrip('/')}/api/v1/import/sources",
+        headers={"X-Dominex-Api-Key": settings.DOMINEX_API_KEY},
+        json={"code": code, "name": f"{org_code} (AD)"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return code
+
+
+def _build_portal_env(cd, org_code, service_secret, source_code):
+    """Собирает словарь .env развёртываемого портала из данных формы (cd),
+    автогенерируемых секретов и публичных адресов экосистемы."""
+    from cryptography.fernet import Fernet
+
+    db_pass = secrets.token_urlsafe(24)
+    return {
+        "POSTGRES_DB": f"{org_code}_portal",
+        "POSTGRES_USER": f"{org_code}_user",
+        "POSTGRES_PASSWORD": db_pass,
+        "DATABASE_URL": f"postgresql+asyncpg://{org_code}_user:{db_pass}@db:5432/{org_code}_portal",
+        "SECRET_KEY": secrets.token_hex(32),
+        "SESSION_EXPIRE_MINUTES": "480",
+        "LDAP_SERVER": cd["ldap_server"],
+        "LDAP_PORT": "389",
+        "LDAP_USE_SSL": "false",
+        "LDAP_BASE_DN": cd["ldap_base_dn"],
+        "LDAP_BIND_USER": cd["ldap_bind_user"],
+        "LDAP_BIND_PASSWORD": cd["ldap_bind_password"],
+        "LDAP_ADMIN_GROUP": cd["ldap_admin_group"],
+        "LDAP_SSL_PORT": "636",
+        "PASSWORD_MAX_AGE_DAYS": "90",
+        "VPN_GROUP_ADMINS": cd["vpn_group_admins"],
+        "VPN_GROUP_USERS": cd["vpn_group_users"],
+        "OPNSENSE_HOST": cd.get("opnsense_host") or "",
+        "OPNSENSE_API_KEY": cd.get("opnsense_api_key") or "",
+        "OPNSENSE_API_SECRET": cd.get("opnsense_api_secret") or "",
+        "OPNSENSE_VERIFY_SSL": "false",
+        "OPNSENSE_CA_REF": cd.get("opnsense_ca_ref") or "",
+        "OVPN_SERVER_ADMINS_UUID": cd.get("ovpn_server_admins_uuid") or "",
+        "OVPN_SERVER_USERS_UUID": cd.get("ovpn_server_users_uuid") or "",
+        "WG_SERVER_ADMINS_UUID": cd.get("wg_server_admins_uuid") or "",
+        "WG_SERVER_USERS_UUID": cd.get("wg_server_users_uuid") or "",
+        "WINRM_HOST": cd.get("winrm_host") or "",
+        "WINRM_PORT": "5985",
+        "WINRM_USER": cd.get("winrm_user") or "",
+        "WINRM_PASSWORD": cd.get("winrm_password") or "",
+        "PORTAL_TITLE": cd["portal_title"],
+        "PORTAL_ORG_NAME": cd["portal_org_name"],
+        "PORTAL_BASE_URL": cd["portal_base_url"],
+        "MAIL_SYSTEMS_ENCRYPTION_KEY": Fernet.generate_key().decode(),
+        # Интеграция с Dominex через SSOD Auth (M2M)
+        "DOMINEX_API_BASE_URL": settings.ECOSYSTEM_DOMINEX_PUBLIC_URL,
+        "DOMINEX_SOURCE_CODE": source_code,
+        "SSOD_AUTH_BASE_URL": settings.ECOSYSTEM_SSOD_AUTH_PUBLIC_URL,
+        "M2M_CLIENT_ID": f"{org_code}_portal",
+        "M2M_CLIENT_SECRET": service_secret,
+    }
+
+
+@staff_member_required
+def portal_deploy(request):
+    """Форма + запуск авторазвёртывания портала на удалённой VM. Собирает
+    SSH-реквизиты и конфиг, авто-регистрирует ServiceClient(+grant) и
+    ExternalSource в Dominex, пишет spec-файл с секретами и запускает
+    фоновый subprocess run_portal_deploy, редиректит на страницу статуса.
+    SSH-креды в БД не сохраняются - только в spec-файле на время job."""
+    if request.method != "POST":
+        return render(request, "accounts/portal_deploy_form.html", {"form": PortalDeployForm()})
+
+    form = PortalDeployForm(request.POST)
+    if not form.is_valid():
+        return render(request, "accounts/portal_deploy_form.html", {"form": form})
+
+    cd = form.cleaned_data
+    org = cd["org_code"]
+
+    try:
+        client, service_secret = _ensure_service_client(org)
+        source_code = _ensure_dominex_source(org)
+    except Exception as e:
+        messages.error(request, f"Не удалось подготовить интеграции (ServiceClient/ExternalSource): {e}")
+        return render(request, "accounts/portal_deploy_form.html", {"form": form})
+
+    env_map = _build_portal_env(cd, org, service_secret, source_code)
+
+    repo = settings.PORTAL_REPO_URL
+    token = settings.PORTAL_DEPLOY_TOKEN
+    clone_url = repo.replace("https://", f"https://{token}@", 1) if token else repo
+
+    job = DeployJob.objects.create(
+        org_code=org,
+        target_host=cd["target_host"],
+        target_port=cd["target_port"],
+        target_user=cd["target_user"],
+        status=DeployJob.Status.PENDING,
+        service_client=client,
+        created_by=request.user,
+    )
+
+    spec = {
+        "org_code": org,
+        "clone_url": clone_url,
+        "env": env_map,
+        "ssh": {
+            "password": cd.get("ssh_password") or "",
+            "private_key": cd.get("ssh_private_key") or "",
+            "key_passphrase": cd.get("ssh_key_passphrase") or "",
+            "sudo_password": cd.get("sudo_password") or "",
+        },
+    }
+    fd, spec_path = tempfile.mkstemp(prefix="deploy_", suffix=".json")
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        json.dump(spec, fh)
+    os.chmod(spec_path, 0o600)
+
+    subprocess.Popen(
+        [sys.executable, "manage.py", "run_portal_deploy", str(job.uuid), spec_path],
+        cwd=str(settings.BASE_DIR),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    messages.success(request, f"Развёртывание портала «{org}» запущено.")
+    return redirect("accounts:portal_deploy_status", job_uuid=job.uuid)
+
+
+@staff_member_required
+def portal_deploy_status(request, job_uuid):
+    job = DeployJob.objects.filter(uuid=job_uuid).first()
+    if job is None:
+        raise Http404("Задача не найдена.")
+    return render(request, "accounts/portal_deploy_status.html", {"job": job})
+
+
+@staff_member_required
+def portal_deploy_log(request, job_uuid):
+    """JSON лог+статус для polling'а страницей статуса."""
+    job = DeployJob.objects.filter(uuid=job_uuid).first()
+    if job is None:
+        raise Http404("Задача не найдена.")
+    return JsonResponse({
+        "status": job.status,
+        "status_display": job.get_status_display(),
+        "log": job.log,
+        "finished": job.status in (DeployJob.Status.SUCCESS, DeployJob.Status.FAILED),
+    })

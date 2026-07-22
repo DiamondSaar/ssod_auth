@@ -1235,3 +1235,66 @@ class ServiceClientGrant(TimeStampedModel):
     def __str__(self):
         return f"{self.service_client.code} -> {self.audience}"
 
+
+class DeployJob(TimeStampedModel):
+    """
+    Задача авторазвёртывания портала на удалённой VM из консоли ССОД (см.
+    accounts.views.portal_deploy + management-команда run_portal_deploy).
+    Хранит статус и лог, но НИКОГДА не SSH-креды VM (пароль/ключ) - они
+    живут только во временном файле на время выполнения job и удаляются
+    по завершении. Лог маскирует секреты перед записью.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "В очереди"
+        RUNNING = "running", "Выполняется"
+        SUCCESS = "success", "Успешно"
+        FAILED = "failed", "Ошибка"
+
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name="UUID")
+
+    org_code = models.SlugField(max_length=100, verbose_name="Код организации")
+
+    target_host = models.CharField(max_length=255, verbose_name="SSH host VM")
+    target_port = models.PositiveIntegerField(default=22, verbose_name="SSH порт")
+    target_user = models.CharField(max_length=100, verbose_name="SSH пользователь")
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING, verbose_name="Статус"
+    )
+    log = models.TextField(blank=True, verbose_name="Лог развёртывания")
+
+    service_client = models.ForeignKey(
+        ServiceClient,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deploy_jobs",
+        verbose_name="Созданный клиент",
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="deploy_jobs",
+        verbose_name="Инициатор",
+    )
+    finished_at = models.DateTimeField(null=True, blank=True, verbose_name="Завершено")
+
+    class Meta:
+        verbose_name = "Задача развёртывания портала"
+        verbose_name_plural = "Задачи развёртывания порталов"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"deploy {self.org_code} -> {self.target_host} ({self.status})"
+
+    def append_log(self, line: str):
+        """Дописать строку в лог (с отметкой времени). Единственный писатель -
+        подпроцесс run_portal_deploy, поэтому гонок нет."""
+        self.refresh_from_db(fields=["log"])
+        stamped = f"{timezone.now():%H:%M:%S} {line}\n"
+        self.log = (self.log or "") + stamped
+        self.save(update_fields=["log", "updated_at"])
+

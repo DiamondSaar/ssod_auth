@@ -67,4 +67,8 @@ urlpatterns = [
         name="service_client_grant_toggle",
     ),
 
+    path("integrations/deploy/", views.portal_deploy, name="portal_deploy"),
+    path("integrations/deploy/<uuid:job_uuid>/", views.portal_deploy_status, name="portal_deploy_status"),
+    path("integrations/deploy/<uuid:job_uuid>/log/", views.portal_deploy_log, name="portal_deploy_log"),
+
 ]

@@ -8,3 +8,4 @@ django-otp-webauthn
 Pillow
 requests>=2.31,<3.0
 PyJWT>=2.8,<3.0
+paramiko>=3.4,<4.0

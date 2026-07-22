@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Развернуть портал — ССОД Auth Center{% endblock %}
+
+{% block main_class %}account-page{% endblock %}
+
+{% block content %}
+{% include "components/app_header.html" %}
+
+<section class="account-workspace">
+
+    <div class="hero-badge">Интеграции</div>
+
+    <h1 class="admin-title">Развернуть портал</h1>
+
+    <p class="admin-subtitle">
+        ССОД по SSH развернёт новый портал на указанной VM: установит Docker, склонирует репозиторий,
+        сгенерирует <code>.env</code>, поднимет контейнеры и авто-зарегистрирует интеграции (ServiceClient +
+        ExternalSource в Dominex). SSH-реквизиты в базе не сохраняются — используются только на время
+        развёртывания. Секреты (SECRET_KEY, пароль БД и т.п.) генерируются автоматически.
+    </p>
+
+    <form method="post" class="form-card">
+        {% csrf_token %}
+
+        <h2 class="admin-title" style="font-size:18px;margin-top:8px">Целевая VM (SSH)</h2>
+        {% for field in form %}
+            {% if field.name == "portal_title" %}
+                <h2 class="admin-title" style="font-size:18px;margin-top:24px">Конфигурация портала</h2>
+            {% endif %}
+            <div class="form-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span style="color:var(--accent-orange)">*</span>{% endif %}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="form-help">{{ field.help_text }}</div>{% endif %}
+                {% if field.errors %}<div class="form-error">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button class="button primary" type="submit">Развернуть</button>
+            <a class="button secondary" href="{% url 'accounts:account_integrations' %}">Отмена</a>
+        </div>
+    </form>
+
+</section>
+{% endblock %}
