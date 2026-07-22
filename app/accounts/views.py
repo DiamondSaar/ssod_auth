@@ -658,8 +658,11 @@ def _build_portal_env(cd, org_code, service_secret, source_code):
         "LDAP_ADMIN_GROUP": cd["ldap_admin_group"],
         "LDAP_SSL_PORT": "636",
         "PASSWORD_MAX_AGE_DAYS": "90",
-        "VPN_GROUP_ADMINS": cd["vpn_group_admins"],
-        "VPN_GROUP_USERS": cd["vpn_group_users"],
+        "VPN_GROUP_ADMINS": cd.get("vpn_group_admins") or "",
+        "VPN_GROUP_USERS": cd.get("vpn_group_users") or "",
+        # Область синхронизации в Dominex (пусто = все пользователи/компьютеры)
+        "SYNC_USER_GROUP": cd.get("sync_user_group") or "",
+        "SYNC_COMPUTER_OU": cd.get("sync_computer_ou") or "",
         "OPNSENSE_HOST": cd.get("opnsense_host") or "",
         "OPNSENSE_API_KEY": cd.get("opnsense_api_key") or "",
         "OPNSENSE_API_SECRET": cd.get("opnsense_api_secret") or "",

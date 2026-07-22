@@ -117,16 +117,16 @@ class ServiceClientGrantCreateForm(forms.Form):
     )
 
 
-def _txt(placeholder="", required=True):
+def _txt(placeholder="", required=True, label=None, help_text="", initial=None):
     return forms.CharField(
-        required=required,
+        required=required, label=label, help_text=help_text, initial=initial,
         widget=forms.TextInput(attrs={"class": "form-input", "placeholder": placeholder}),
     )
 
 
-def _secret(placeholder="", required=True):
+def _secret(placeholder="", required=True, label=None, help_text=""):
     return forms.CharField(
-        required=required,
+        required=required, label=label, help_text=help_text,
         widget=forms.PasswordInput(attrs={"class": "form-input", "placeholder": placeholder}, render_value=True),
     )
 
@@ -168,13 +168,24 @@ class PortalDeployForm(forms.Form):
     portal_org_name = _txt("АсКом")
     portal_base_url = _txt("https://vpn.ascom.local")
 
-    ldap_server = _txt("ascom.local")
-    ldap_base_dn = _txt("DC=ascom,DC=local")
-    ldap_bind_user = _txt("CN=ldap_reader,CN=Users,DC=ascom,DC=local")
-    ldap_bind_password = _secret("пароль ldap_reader")
-    ldap_admin_group = _txt("CN=VPN_ADMINS,CN=Users,DC=ascom,DC=local")
-    vpn_group_admins = _txt("ACCESS_ADMIN")
-    vpn_group_users = _txt("ACCESS_RDS")
+    ldap_server = _txt("192.168.145.245", label="LDAP-сервер (AD)",
+                       help_text="IP или имя контроллера домена")
+    ldap_base_dn = _txt("DC=ascom,DC=local", label="Base DN")
+    ldap_bind_user = _txt("ascom\\svc-portal-ldap", label="Bind-пользователь",
+                          help_text="сервисная учётка с чтением+записью, напр. ascom\\svc-portal-ldap")
+    ldap_bind_password = _secret("пароль сервисной учётки", label="Пароль bind-пользователя")
+    ldap_admin_group = _txt("Portal-Admins", label="AD-группа админов портала",
+                            help_text="CN группы, чьи члены получают админ-доступ в портал")
+
+    # ── Область синхронизации (что выгружать в Dominex) ──
+    sync_user_group = _txt("AsComMain", required=False, label="Группа пользователей для синка",
+                           help_text="только (вложенные) члены этой группы выгружаются — отсекает технические учётки. Пусто = все пользователи домена. CN или DN")
+    sync_computer_ou = _txt("", required=False, label="OU компьютеров (опц.)",
+                            help_text="DN OU для поиска ПК. Пусто = весь домен")
+
+    # ── VPN (опционально; для AsCom OpenVPN-драйвер ещё не готов) ──
+    vpn_group_admins = _txt("ACCESS_ADMIN", required=False, label="VPN-группа админов")
+    vpn_group_users = _txt("ACCESS_RDS", required=False, label="VPN-группа пользователей")
 
     opnsense_host = _txt("https://10.0.0.1", required=False)
     opnsense_api_key = _secret("OPNsense API key", required=False)
