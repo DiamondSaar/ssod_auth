@@ -712,9 +712,18 @@ def portal_deploy(request):
 
     env_map = _build_portal_env(cd, org, service_secret, source_code)
 
-    repo = settings.PORTAL_REPO_URL
-    token = settings.PORTAL_DEPLOY_TOKEN
-    clone_url = repo.replace("https://", f"https://{token}@", 1) if token else repo
+    # Приоритет: SSH deploy-key (приватный репо) → HTTPS+токен → анонимный HTTPS.
+    if settings.PORTAL_DEPLOY_SSH_KEY:
+        clone = {
+            "mode": "ssh",
+            "url": settings.PORTAL_REPO_SSH_URL,
+            "deploy_key": settings.PORTAL_DEPLOY_SSH_KEY,
+        }
+    elif settings.PORTAL_DEPLOY_TOKEN:
+        token = settings.PORTAL_DEPLOY_TOKEN
+        clone = {"mode": "https", "url": settings.PORTAL_REPO_URL.replace("https://", f"https://{token}@", 1)}
+    else:
+        clone = {"mode": "https", "url": settings.PORTAL_REPO_URL}
 
     job = DeployJob.objects.create(
         org_code=org,
@@ -728,7 +737,7 @@ def portal_deploy(request):
 
     spec = {
         "org_code": org,
-        "clone_url": clone_url,
+        "clone": clone,
         "env": env_map,
         "ssh": {
             "password": cd.get("ssh_password") or "",

@@ -3,3 +3,5 @@ app/staticfiles/
 app/mediafiles/
 __pycache__/
 *.pyc
+# Portal deploy read-only SSH key (never commit)
+app/secrets/

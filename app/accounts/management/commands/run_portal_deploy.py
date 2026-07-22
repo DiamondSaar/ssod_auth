@@ -84,7 +84,7 @@ class Command(BaseCommand):
     def _deploy(self, job, spec):
         ssh_spec = spec["ssh"]
         env_lines = spec["env"]            # dict KEY->VALUE
-        clone_url = spec["clone_url"]      # содержит токен - НЕ логировать
+        clone = spec["clone"]              # {mode: ssh|https, url, deploy_key?} - НЕ логировать
         org = spec["org_code"]
         deploy_dir = DEPLOY_DIR_TMPL.format(org=org)
         sudo_password = ssh_spec.get("sudo_password") or ""
@@ -136,13 +136,35 @@ class Command(BaseCommand):
         run("command -v docker >/dev/null || (curl -fsSL https://get.docker.com | sh)", use_sudo=True)
         run("docker compose version >/dev/null 2>&1 || (apt-get update && apt-get install -y docker-compose-plugin)", use_sudo=True)
 
-        # 2. Клонирование репозитория (url с токеном НЕ логируем)
+        # 2. Клонирование репозитория (url/ключ НЕ логируем)
         job.append_log("--- Клонирование репозитория портала ---")
-        run(
-            f"rm -rf {shlex.quote(deploy_dir)} && git clone --depth 1 {shlex.quote(clone_url)} {shlex.quote(deploy_dir)}",
-            use_sudo=True,
-            log_cmd=f"git clone <repo> {deploy_dir}",
-        )
+        if clone.get("mode") == "ssh":
+            # read-only deploy-key: заливаем во временный файл на VM, клонируем
+            # по git@github.com:..., удаляем ключ сразу же (даже при ошибке).
+            tmp_key = f"/tmp/{org}-deploy-key"
+            sftp = ssh.open_sftp()
+            with sftp.open(tmp_key, "w") as fh:
+                fh.write(clone["deploy_key"])
+            sftp.chmod(tmp_key, 0o600)
+            sftp.close()
+            git_ssh = (
+                f"GIT_SSH_COMMAND='ssh -i {tmp_key} -o IdentitiesOnly=yes "
+                "-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/root/.ssh/known_hosts'"
+            )
+            run(
+                f"install -m 600 {shlex.quote(tmp_key)} /root/.portal-deploy-key && rm -f {shlex.quote(tmp_key)}; "
+                f"mkdir -p /root/.ssh; rm -rf {shlex.quote(deploy_dir)}; "
+                f"{git_ssh} git clone --depth 1 {shlex.quote(clone['url'])} {shlex.quote(deploy_dir)}; "
+                "rc=$?; rm -f /root/.portal-deploy-key; exit $rc",
+                use_sudo=True,
+                log_cmd=f"git clone <deploy-key> {deploy_dir}",
+            )
+        else:
+            run(
+                f"rm -rf {shlex.quote(deploy_dir)} && git clone --depth 1 {shlex.quote(clone['url'])} {shlex.quote(deploy_dir)}",
+                use_sudo=True,
+                log_cmd=f"git clone <repo> {deploy_dir}",
+            )
 
         # 3. Заливаем .env через SFTP в /tmp (без логирования содержимого), затем sudo-переносим
         job.append_log("--- Запись .env ---")

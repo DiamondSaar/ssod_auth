@@ -301,6 +301,19 @@ M2M_TOKEN_SECRET = env("M2M_TOKEN_SECRET", default="dev-m2m-token-secret-change-
 # публичного репо); для приватного нужен токен.
 PORTAL_REPO_URL = env("PORTAL_REPO_URL", default="https://github.com/DiamondSaar/atb-portal.git")
 PORTAL_DEPLOY_TOKEN = env("PORTAL_DEPLOY_TOKEN", default="")
+# Приватный репо клонируется по read-only SSH deploy-key (раздел Deploy keys
+# репозитория). Приватный ключ лежит файлом на сервере (не в БД, не в git -
+# см. .gitignore app/secrets/), монтируется в контейнер через ./app:/app.
+# Если ключ задан - он приоритетнее токена (clone по git@github.com:...).
+PORTAL_REPO_SSH_URL = env("PORTAL_REPO_SSH_URL", default="git@github.com:DiamondSaar/atb-portal.git")
+PORTAL_DEPLOY_SSH_KEY_FILE = env(
+    "PORTAL_DEPLOY_SSH_KEY_FILE", default=str(BASE_DIR / "secrets" / "portal_deploy_key")
+)
+try:
+    with open(PORTAL_DEPLOY_SSH_KEY_FILE, "r", encoding="utf-8") as _dk:
+        PORTAL_DEPLOY_SSH_KEY = _dk.read()
+except OSError:
+    PORTAL_DEPLOY_SSH_KEY = ""
 # Публичные адреса экосистемы, которые прописываются в .env развёртываемого
 # портала (портал на чужой VM обращается к ним по интернету, НЕ по docker-
 # internal DOMINEX_API_BASE_URL выше, который для собственных вызовов ssod_auth).
