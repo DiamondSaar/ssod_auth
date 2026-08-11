@@ -11,6 +11,7 @@ from .models import (
     Product,
     ProductPermission,
     ProductRole,
+    RepositoryItem,
     ServiceClient,
     ServiceClientGrant,
     SSODAccessKey,
@@ -108,6 +109,41 @@ class ProductAdmin(admin.ModelAdmin):
         "name",
         "code",
         "short_description",
+    )
+
+    ordering = (
+        "sort_order",
+        "name",
+    )
+
+
+@admin.register(RepositoryItem)
+class RepositoryItemAdmin(admin.ModelAdmin):
+    """
+    Управление разделом «Продукты → Репозиторий».
+
+    Сюда администратор добавляет загружаемый внутренний софт
+    (сейчас - мобильное приложение Biographia) и указывает прямую
+    ссылку на файл (например, на biographia.ssod.pro/builds/latest.apk -
+    стабильный симлинк, который заново указывать при каждой новой
+    сборке не нужно).
+    """
+
+    list_display = (
+        "name",
+        "version_label",
+        "download_url",
+        "is_active",
+        "sort_order",
+    )
+
+    list_filter = (
+        "is_active",
+    )
+
+    search_fields = (
+        "name",
+        "description",
     )
 
     ordering = (

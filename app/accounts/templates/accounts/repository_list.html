@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Репозиторий — ССОД Auth Center{% endblock %}
+
+{% block content %}
+
+<section class="account-products-page">
+
+    <div class="account-products-header">
+        <div>
+            <div class="page-pill">Личный кабинет</div>
+            <h1>Репозиторий</h1>
+            <p>
+                Внутренний софт и тестовые сборки экосистемы ССОД/Dominex.
+            </p>
+        </div>
+    </div>
+
+    <!--
+        Та же сетка карточек, что и «Мои продукты» (product-card-grid) -
+        но без access-dot/SSO-логики: здесь доступ ко всему списку даёт
+        сама сессия ссод аус, отдельного гейта на пункт нет.
+    -->
+    <div class="product-card-grid">
+
+        {% for item in items %}
+            <a class="product-card" href="{% url 'accounts:repository_item_detail' item.id %}">
+
+                <div class="product-card-logo-wrap">
+                    {% if item.icon %}
+                        <img
+                            src="{{ item.icon.url }}"
+                            alt="{{ item.name }}"
+                            class="product-card-logo"
+                        >
+                    {% else %}
+                        <div class="product-card-logo-placeholder">
+                            {{ item.name|slice:":2" }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-card-info">
+                    <div class="product-card-field product-card-title">
+                        {{ item.name }}
+                    </div>
+                    <div class="product-card-field">
+                        {{ item.description }}
+                    </div>
+                    <div class="product-card-field">
+                        {{ item.version_label|default:"" }}
+                    </div>
+                </div>
+
+            </a>
+        {% empty %}
+
+            <div class="empty-products-box">
+                Пока ничего не добавлено.
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+</section>
+
+{% endblock %}

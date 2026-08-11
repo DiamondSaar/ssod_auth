@@ -20,6 +20,9 @@ urlpatterns = [
 
     ),
 
+    path("repository/", views.repository_list, name="repository_list"),
+    path("repository/<int:item_id>/", views.repository_item_detail, name="repository_item_detail"),
+
     path(
         "sso/authorize/<slug:product_code>/",
         views.sso_authorize,

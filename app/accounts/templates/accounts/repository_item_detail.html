@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ item.name }} — Репозиторий — ССОД Auth Center{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'accounts/css/repository.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<section class="account-products-page">
+
+    <div class="account-products-header">
+        <div>
+            <div class="page-pill"><a href="{% url 'accounts:repository_list' %}">← Репозиторий</a></div>
+            <h1>{{ item.name }}</h1>
+            {% if item.description %}
+                <p>{{ item.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="repository-item-card">
+
+        <div class="repository-item-logo-wrap">
+            {% if item.icon %}
+                <img src="{{ item.icon.url }}" alt="{{ item.name }}" class="repository-item-logo">
+            {% else %}
+                <div class="product-card-logo-placeholder">{{ item.name|slice:":2" }}</div>
+            {% endif %}
+        </div>
+
+        <div class="repository-item-qr-box">
+            <img src="{{ qr_data_uri }}" alt="QR-код на скачивание" class="repository-item-qr">
+        </div>
+
+        <p class="repository-item-hint">
+            Отсканируйте камерой телефона или откройте ссылку ниже прямо в браузере на телефоне.
+        </p>
+
+        <a class="button primary repository-item-download" href="{{ item.download_url }}">
+            Скачать
+        </a>
+
+        {% if item.version_label %}
+            <div class="repository-item-version">{{ item.version_label }}</div>
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

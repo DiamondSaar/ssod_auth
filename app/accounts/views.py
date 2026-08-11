@@ -1,3 +1,5 @@
+import base64
+import io
 import uuid as uuid_lib
 import json
 import os
@@ -7,17 +9,19 @@ import tempfile
 from urllib.parse import urlencode
 
 import jwt
+import qrcode
 import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from .models import (
     AuthEvent,
     DeployJob,
     Product,
+    RepositoryItem,
     ServiceClient,
     ServiceClientGrant,
     UserProductAccess,
@@ -266,6 +270,51 @@ def account_products(request):
         "accounts/account_products.html",
         {
             "product_cards": product_cards,
+        },
+    )
+
+
+@login_required
+def repository_list(request):
+    """
+    Раздел «Продукты → Репозиторий» - каталог загружаемого внутреннего
+    софта (сейчас - мобильное приложение Biographia). В отличие от
+    account_products выше, доступ не гейтится через UserProductAccess -
+    сама сессия ссод аус и есть требуемый доступ (см. RepositoryItem's
+    docstring).
+    """
+    items = RepositoryItem.objects.filter(is_active=True)
+    return render(
+        request,
+        "accounts/repository_list.html",
+        {
+            "items": items,
+        },
+    )
+
+
+@login_required
+def repository_item_detail(request, item_id):
+    """
+    Один пункт репозитория - QR-код и прямая ссылка на скачивание.
+
+    QR-код генерируется на лету при каждом заходе (не хранится на диске -
+    дешевле перегенерировать, чем поддерживать файл в актуальном
+    состоянии при смене download_url).
+    """
+    item = get_object_or_404(RepositoryItem, pk=item_id, is_active=True)
+
+    qr_image = qrcode.make(item.download_url)
+    buffer = io.BytesIO()
+    qr_image.save(buffer, format="PNG")
+    qr_data_uri = "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode("ascii")
+
+    return render(
+        request,
+        "accounts/repository_item_detail.html",
+        {
+            "item": item,
+            "qr_data_uri": qr_data_uri,
         },
     )
 

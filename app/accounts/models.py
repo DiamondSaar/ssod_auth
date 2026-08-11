@@ -345,6 +345,66 @@ class Product(TimeStampedModel):
         return f"{self.name} ({self.code})"
 
 
+class RepositoryItem(TimeStampedModel):
+    """
+    Пункт каталога «Продукты → Репозиторий» - загружаемый внутренний
+    софт/тестовые сборки экосистемы (первый пункт - мобильное приложение
+    Biographia). В отличие от Product, здесь нет SSO-запуска и гейта по
+    UserProductAccess - весь список виден любому вошедшему в ссод аус
+    пользователю (см. repository_list во views.py), а сама ссылка ведёт
+    на статический файл на другом хосте (например, biographia.ssod.pro/
+    builds/latest.apk), не на внутренний маршрут ссод аус.
+    """
+
+    name = models.CharField(
+        max_length=255,
+        verbose_name="Название",
+    )
+
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Описание",
+    )
+
+    icon = models.ImageField(
+        upload_to="repository_icons/",
+        blank=True,
+        null=True,
+        verbose_name="Значок",
+    )
+
+    download_url = models.URLField(
+        verbose_name="Ссылка на скачивание",
+        help_text="Прямая ссылка на файл (например, https://biographia.ssod.pro/builds/latest.apk).",
+    )
+
+    version_label = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name="Версия/сборка",
+        help_text="Свободный текст, например 'build 7' - у разных продуктов разные схемы версионирования.",
+    )
+
+    sort_order = models.PositiveIntegerField(
+        default=100,
+        verbose_name="Порядок сортировки",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Активен",
+    )
+
+    class Meta:
+        verbose_name = "Пункт репозитория"
+        verbose_name_plural = "Репозиторий: пункты"
+        ordering = ["sort_order", "name"]
+
+    def __str__(self):
+        return self.name
+
+
 class ProductPermission(TimeStampedModel):
     """
     Конкретное право внутри продукта.
