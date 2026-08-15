@@ -52,6 +52,29 @@
     width: 100%;
 }
 
+/* Прямая ссылка на файл под кнопкой скачивания. Длинный URL обязан
+   переноситься по любым символам, иначе он растягивает карточку. */
+.repository-item-direct {
+    margin-top: 16px;
+    text-align: left;
+}
+
+.repository-item-direct-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.repository-item-direct-url {
+    display: block;
+    font-size: 12px;
+    line-height: 1.45;
+    word-break: break-all;
+    /* Выделяется целиком одним касанием - так его удобнее скопировать
+       и переслать, ради чего он тут и показан. */
+    user-select: all;
+}
+
 .repository-item-version {
     margin-top: 16px;
     padding-top: 14px;

@@ -43,6 +43,20 @@
             Скачать
         </a>
 
+        {#
+            Прямая ссылка на файл текстом, чтобы её можно было скопировать и
+            переслать. Файл раздаётся статикой на стороне самого продукта
+            (см. RepositoryItem.download_url) и входа в ссод аус не требует -
+            значит, ссылку можно дать человеку без учётной записи, например
+            чтобы проверить сборку на чужом телефоне.
+        #}
+        <div class="repository-item-direct">
+            <div class="repository-item-direct-label">
+                Прямая ссылка — открывается без входа в ССОД:
+            </div>
+            <a class="repository-item-direct-url" href="{{ item.download_url }}">{{ item.download_url }}</a>
+        </div>
+
         {% if item.version_label %}
             <div class="repository-item-version">{{ item.version_label }}</div>
         {% endif %}
