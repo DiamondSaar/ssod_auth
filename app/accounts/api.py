@@ -17,6 +17,7 @@ from accounts.models import (
     ServiceClient,
     ServiceClientGrant,
     SSODAccessKey,
+    UserProductAccess,
     WebAuthnCredential,
 )
 
@@ -113,9 +114,25 @@ def verify_access_key(request):
     access_key.last_used_at = timezone.now()
     access_key.save(update_fields=["last_used_at", "updated_at"])
 
+    # Коды продуктов, к которым у владельца ключа есть ДЕЙСТВУЮЩИЙ доступ.
+    # Без этого потребитель ключа (например привратник llm.ssod.pro) знает
+    # только что ключ валиден, но не знает, положен ли этому человеку
+    # конкретный продукт - и вынужден либо пускать всех, либо держать
+    # собственный список, что противоречит централизации доступа в ССОД.
+    product_codes = list(
+        UserProductAccess.objects.filter(
+            user=user,
+            status=UserProductAccess.Status.ACTIVE,
+            product__is_active=True,
+        )
+        .values_list("product__code", flat=True)
+        .order_by("product__code")
+    )
+
     return JsonResponse(
         {
             "valid": True,
+            "products": product_codes,
             "user": {
                 "id": str(user.uuid),
                 "username": user.username,
