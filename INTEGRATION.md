@@ -46,6 +46,30 @@ a new module, and the rationale for accepting "SSOD Auth down = all
 inter-module traffic stops" as a deliberate tradeoff: `dominex/docs/
 module-interactions.md`, "Service-to-service auth for new modules".
 
+## "Инфраструктура предприятия" (added 2026-08-26)
+
+- Tile on the personal-account home page + `/account/infrastructure/`
+  (`accounts/views.py::infrastructure`), read-only. Visible only when
+  `CustomUser.can_view_infrastructure` is true: organization set AND
+  (position in `INFRA_MANAGER_POSITIONS` OR the per-user
+  `infrastructure_access_override` flag, migration 0014). Position comes
+  from the Dominex projection, so a position change there opens/closes the
+  page on the user's next login; the flag is local and survives syncs.
+- All data comes from Dominex in one call -
+  `accounts/services/dominex_client.py::fetch_infrastructure_summary()` ->
+  `GET /api/v1/infrastructure/summary/users/<username>`. Dominex resolves
+  the organization from the username itself and caches the answer for 10
+  minutes (Dominex aggregates Zabbix, ssod_auth holds no Zabbix
+  credentials and makes no Zabbix calls). Full contract and the reasons
+  behind the split: `dominex/docs/module-interactions.md`,
+  "Infrastructure Summary for Client Managers".
+- Same best-effort contract as `fetch_user_projection` - None on any
+  failure, and the page then renders an explicit "сводка недоступна"
+  panel instead of an empty table.
+- Deploy note: the page ships a new stylesheet
+  (`accounts/static/accounts/css/infrastructure.css`), so a deploy needs
+  `migrate` **and** `collectstatic`.
+
 ## What's still local-only / not yet built
 
 - No SSO/session handoff - logging into SSOD Auth and logging into Dominex

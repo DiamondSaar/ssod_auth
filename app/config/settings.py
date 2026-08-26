@@ -278,6 +278,34 @@ DOMINEX_API_KEY = env("DOMINEX_API_KEY", default="dev-integration-key-change-me"
 # Dominex Mode"). Flip to False as an emergency/local-mode rollback lever.
 DOMINEX_CONNECTED_MODE = env.bool("DOMINEX_CONNECTED_MODE", default=True)
 
+# ─── «Инфраструктура предприятия» (accounts.views.infrastructure) ──────────
+# Должности, которым плитка сводки по инфраструктуре видна автоматически.
+# Сверяется с CustomUser.position.name — а он приезжает из Dominex, где
+# должность лежит справочником (person_position), поэтому список именно
+# строковый, а не привязка к id: одна и та же должность в разных
+# организациях — разные строки справочника, но правило для них одно.
+# Сравнение регистронезависимое и без учёта пробелов по краям.
+# Точечные исключения (должность названа иначе, например «Собственник»)
+# выдаются флагом CustomUser.infrastructure_access_override, а не
+# расширением этого списка.
+INFRA_MANAGER_POSITIONS = env.list(
+    "INFRA_MANAGER_POSITIONS",
+    default=[
+        "Руководитель",
+        "Директор",
+        "Генеральный директор",
+        "Исполнительный директор",
+        "Системный администратор",
+        "Системный админ",
+        "IT-директор",
+    ],
+)
+
+# Таймаут запроса сводки к Dominex. Страница пользовательская, ответ уже
+# закэширован на стороне Dominex (10 минут), поэтому ждать долго незачем —
+# лучше показать страницу с честной ошибкой источника.
+INFRA_SUMMARY_TIMEOUT = env.int("INFRA_SUMMARY_TIMEOUT", default=10)
+
 # Shared secret for verifying/issuing SSO tickets exchanged with Dominex
 # (see dominex/docs/module-interactions.md "Credential, Session, Token and
 # API Key Lifecycle"). Must match Dominex's SSO_TICKET_SECRET.

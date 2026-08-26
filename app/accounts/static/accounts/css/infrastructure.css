@@ -1,0 +1,503 @@
+/*
+    Страница «Инфраструктура предприятия» (accounts/infrastructure.html).
+
+    Палитра и радиусы взяты из дизайн-пакета
+    design/«Интерфейс ЛК руководителя»/handoff/README-ЛК-руководителя.md,
+    а не из общей темы ЛК: это плотная техническая страница-сводка, у неё
+    свой тёмный фон и своя типографика (технические значения — моноширинные).
+    Всё заскоплено на .infra-page, чтобы не задеть остальные страницы ЛК.
+
+    Пороги окраски полос загрузки: <70% синий, 70–84% оранжевый, ≥85%
+    красный. Сам порог считается во вью (_load_tone), здесь только цвета.
+*/
+
+.infra-page {
+    --infra-bg-soft: #0d1b2e;
+    --infra-card: #11243a;
+    --infra-text: #e8eef7;
+    --infra-muted: #8fa2bd;
+    --infra-muted-dim: #5b6f8c;
+    --infra-blue: #1f7ae0;
+    --infra-orange: #ff9500;
+    --infra-green: #6ee7a0;
+    --infra-red: #ff6b5a;
+    --infra-border: rgba(255, 255, 255, 0.10);
+    --infra-border-inner: rgba(255, 255, 255, 0.06);
+
+    min-height: 100vh;
+    padding: 0 0 40px;
+    color: var(--infra-text);
+}
+
+.infra-page .mono {
+    font-family: Consolas, ui-monospace, monospace;
+}
+
+.infra-spacer {
+    flex: 1;
+}
+
+.infra-text-bad {
+    color: var(--infra-red);
+}
+
+/* ─── Хлебные крошки и отметка о свежести данных ───────────────────────── */
+
+.infra-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    font-size: 12px;
+    color: var(--infra-muted);
+}
+
+.infra-breadcrumb a {
+    color: var(--infra-muted);
+    text-decoration: none;
+}
+
+.infra-breadcrumb a:hover {
+    color: var(--infra-orange);
+}
+
+.infra-breadcrumb-current {
+    color: var(--infra-text);
+}
+
+.infra-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--infra-muted-dim);
+}
+
+.infra-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--infra-muted-dim);
+}
+
+.infra-dot-ok {
+    background: #22c55e;
+}
+
+/* ─── Шапка организации ────────────────────────────────────────────────── */
+
+.infra-org {
+    margin: 0 20px;
+    background: var(--infra-bg-soft);
+    border: 1px solid var(--infra-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.infra-org-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 18px;
+}
+
+.infra-org-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.infra-badges {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.infra-chip {
+    display: inline-flex;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--infra-border);
+    color: var(--infra-muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.infra-chip-info {
+    background: rgba(31, 122, 224, 0.16);
+    border-color: rgba(31, 122, 224, 0.40);
+    color: #8ec4ff;
+}
+
+.infra-page h1 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.15;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+}
+
+.infra-org-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    border-top: 1px solid var(--infra-border);
+}
+
+.infra-fact {
+    padding: 9px 18px;
+    border-right: 1px solid var(--infra-border-inner);
+}
+
+.infra-fact-warn {
+    background: rgba(255, 149, 0, 0.10);
+}
+
+.infra-fact-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--infra-muted-dim);
+    margin-bottom: 3px;
+}
+
+.infra-fact-value {
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.infra-fact-note {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--infra-muted);
+}
+
+/* ─── Две колонки: таблица оборудования + оперативная сводка ───────────── */
+
+.infra-columns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 20px 0;
+}
+
+.infra-section {
+    flex: 1 1 620px;
+    min-width: 0;
+    background: var(--infra-card);
+    border: 1px solid var(--infra-border);
+    border-radius: 12px;
+}
+
+.infra-section-head,
+.infra-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--infra-border-inner);
+}
+
+.infra-section-head h2,
+.infra-panel-head h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--infra-muted);
+}
+
+.infra-section-note {
+    font-size: 11px;
+    color: var(--infra-muted-dim);
+}
+
+/* Таблица шире окна не ломает страницу — горизонтальная прокрутка живёт
+   внутри своего контейнера, body не съезжает. */
+.infra-table-scroll {
+    overflow-x: auto;
+}
+
+.infra-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+}
+
+.infra-table th {
+    padding: 7px 14px;
+    text-align: left;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--infra-muted-dim);
+    white-space: nowrap;
+}
+
+.infra-table td {
+    padding: 10px 14px;
+    border-top: 1px solid var(--infra-border-inner);
+    vertical-align: top;
+}
+
+.infra-cell-name {
+    min-width: 220px;
+}
+
+.infra-name-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+.infra-name {
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.infra-kind {
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 10px;
+    color: var(--infra-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.infra-sub {
+    font-size: 11.5px;
+    color: var(--infra-muted);
+}
+
+.infra-metric-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+    font-size: 11.5px;
+    color: var(--infra-muted);
+    min-width: 140px;
+}
+
+.infra-bar {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.infra-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--infra-blue);
+}
+
+.infra-bar-warning {
+    background: var(--infra-orange);
+}
+
+.infra-bar-critical {
+    background: var(--infra-red);
+}
+
+.infra-bar-unknown {
+    background: var(--infra-muted-dim);
+}
+
+/* ─── Состояние узла ──────────────────────────────────────────────────── */
+
+.infra-state {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    margin: 0 4px 4px 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--infra-muted);
+    white-space: nowrap;
+}
+
+.infra-state-ok {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.38);
+    color: var(--infra-green);
+}
+
+.infra-state-warn {
+    background: rgba(255, 149, 0, 0.12);
+    border-color: rgba(255, 149, 0, 0.45);
+    color: #ffb84d;
+}
+
+.infra-state-bad {
+    background: rgba(192, 57, 43, 0.22);
+    border-color: rgba(192, 57, 43, 0.50);
+    color: #ff9b8f;
+}
+
+/* ─── Правая колонка ──────────────────────────────────────────────────── */
+
+.infra-aside {
+    width: 300px;
+    flex: none;
+    display: grid;
+    gap: 12px;
+    position: sticky;
+    top: 12px;
+}
+
+.infra-panel {
+    background: var(--infra-bg-soft);
+    border: 1px solid var(--infra-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.infra-panel-warn {
+    background: rgba(255, 149, 0, 0.08);
+    border-color: rgba(255, 149, 0, 0.45);
+}
+
+.infra-panel-warn .infra-panel-head h2 {
+    color: #ffb84d;
+}
+
+.infra-problem {
+    padding: 9px 13px;
+    border-top: 1px solid var(--infra-border-inner);
+}
+
+.infra-problem-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 3px;
+}
+
+.infra-problem-age {
+    font-size: 11px;
+    color: var(--infra-muted-dim);
+}
+
+.infra-problem-name {
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+.infra-sev {
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--infra-muted);
+}
+
+/* Уровни Zabbix: 0 не классифицировано … 5 чрезвычайная. */
+.infra-sev-3 {
+    background: rgba(208, 160, 43, 0.20);
+    border-color: rgba(208, 160, 43, 0.50);
+    color: #ffd98a;
+}
+
+.infra-sev-4,
+.infra-sev-5 {
+    background: rgba(192, 57, 43, 0.22);
+    border-color: rgba(192, 57, 43, 0.50);
+    color: #ff9b8f;
+}
+
+.infra-sources {
+    display: grid;
+    gap: 8px;
+    padding: 10px 13px;
+}
+
+.infra-source {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    font-size: 11.5px;
+    color: var(--infra-muted);
+}
+
+.infra-source-detail {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    color: var(--infra-muted-dim);
+}
+
+.infra-source-online {
+    color: var(--infra-green);
+}
+
+.infra-source-offline {
+    color: var(--infra-red);
+}
+
+.infra-source-not_configured {
+    color: var(--infra-muted-dim);
+}
+
+.infra-panel-foot {
+    padding: 9px 13px;
+    border-top: 1px solid var(--infra-border-inner);
+    font-size: 11px;
+    color: var(--infra-muted-dim);
+}
+
+/* ─── Пустые состояния и ошибка источника ─────────────────────────────── */
+
+.infra-empty {
+    padding: 18px 14px;
+    font-size: 12.5px;
+    color: var(--infra-muted);
+}
+
+.infra-empty-small {
+    padding: 12px 13px;
+    font-size: 11.5px;
+}
+
+.infra-alert {
+    margin: 0 20px;
+    padding: 18px;
+    background: rgba(255, 149, 0, 0.08);
+    border: 1px solid rgba(255, 149, 0, 0.45);
+    border-radius: 12px;
+}
+
+.infra-alert h2 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #ffb84d;
+}
+
+.infra-alert p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--infra-muted);
+}
+
+@media (max-width: 1100px) {
+    .infra-aside {
+        width: 100%;
+        position: static;
+    }
+}

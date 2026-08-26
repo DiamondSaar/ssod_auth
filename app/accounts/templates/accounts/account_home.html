@@ -44,6 +44,18 @@ account-page
             <p>Создание и просмотр заявок.</p>
         </a>
 
+        {# Только руководителю/системному администратору организации —
+           правило целиком в CustomUser.can_view_infrastructure. #}
+        {% if request.user.can_view_infrastructure %}
+            <a class="admin-card" href="{% url 'accounts:infrastructure' %}">
+                <h2>Инфраструктура предприятия</h2>
+                <p>
+                    Обслуживаемое оборудование, загрузка и открытые проблемы
+                    по вашей организации.
+                </p>
+            </a>
+        {% endif %}
+
         {% if request.user.is_staff %}
             <a class="admin-card" href="{% url 'accounts:account_integrations' %}">
                 <h2>Интеграции</h2>

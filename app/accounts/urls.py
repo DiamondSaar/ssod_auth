@@ -20,6 +20,8 @@ urlpatterns = [
 
     ),
 
+    path("infrastructure/", views.infrastructure, name="infrastructure"),
+
     path("repository/", views.repository_list, name="repository_list"),
     path("repository/<int:item_id>/", views.repository_item_detail, name="repository_item_detail"),
 

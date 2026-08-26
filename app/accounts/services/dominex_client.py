@@ -76,6 +76,48 @@ def verify_dominex_credentials(username, password, timeout=5):
         return None
 
 
+def fetch_infrastructure_summary(username, timeout=None):
+    """Сводка по инфраструктуре организации пользователя (оборудование из
+    карточек Dominex + живые метрики и проблемы Zabbix).
+
+    Организацию определяет сам Dominex по username — ssod_auth не передаёт
+    id организации, поэтому подменить его на чужой невозможно (см.
+    dominex/app/api/infrastructure.py). Кэш 10 минут тоже на стороне
+    Dominex: обновление страницы не должно превращаться в очередь запросов
+    к Zabbix.
+
+    Тот же контракт «никогда не бросаем исключение, при любой ошибке пишем
+    в лог и возвращаем None», что и у fetch_user_projection() выше —
+    страница обязана открыться и без Dominex, просто с сообщением о том,
+    что источник недоступен.
+    """
+
+    url = f"{settings.DOMINEX_API_BASE_URL}/api/v1/infrastructure/summary/users/{username}"
+    try:
+        response = requests.get(
+            url,
+            headers={"X-Dominex-Api-Key": settings.DOMINEX_API_KEY},
+            timeout=timeout or settings.INFRA_SUMMARY_TIMEOUT,
+        )
+    except requests.RequestException:
+        logger.warning("Dominex infrastructure summary request failed for %s", username, exc_info=True)
+        return None
+
+    if response.status_code != 200:
+        logger.warning(
+            "Dominex infrastructure summary for %s returned %s", username, response.status_code
+        )
+        return None
+
+    try:
+        return response.json()
+    except ValueError:
+        logger.warning(
+            "Dominex infrastructure summary for %s returned invalid JSON", username, exc_info=True
+        )
+        return None
+
+
 def fetch_oracle_status(username, timeout=5):
     """Read-only crypto-oracle attempt-log summary for security.html
     (biographia TZ: Dominex's rate-limited HMAC oracle protecting the

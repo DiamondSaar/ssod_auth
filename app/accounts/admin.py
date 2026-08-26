@@ -70,6 +70,9 @@ class CustomUserAdmin(UserAdmin):
                     "access_class",
                     "must_change_password",
                     "blocked_reason",
+                    # Локальный флаг, а не проекция из Dominex - остаётся
+                    # редактируемым и в DOMINEX_CONNECTED_MODE.
+                    "infrastructure_access_override",
                 )
             },
         ),

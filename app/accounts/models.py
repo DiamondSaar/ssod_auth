@@ -238,11 +238,48 @@ class CustomUser(AbstractUser):
         verbose_name="Роль в системе",
     )
 
+    infrastructure_access_override = models.BooleanField(
+        default=False,
+        verbose_name="Доступ к инфраструктуре предприятия",
+        help_text=(
+            "Выдать плитку «Инфраструктура предприятия» вручную, даже если "
+            "должность не входит в список INFRA_MANAGER_POSITIONS. Для "
+            "случаев, когда должность руководителя названа нетипично."
+        ),
+    )
+
 
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
         ordering = ["last_name", "first_name", "username"]
+
+    @property
+    def can_view_infrastructure(self):
+        """Видна ли пользователю сводка по инфраструктуре его организации.
+
+        Два условия, оба обязательны:
+        1. организация задана — сводка строится по организации, без неё
+           показывать нечего и незачем;
+        2. должность входит в INFRA_MANAGER_POSITIONS, либо выдан ручной
+           флаг-исключение.
+
+        Должность приезжает из Dominex при каждом входе (accounts/signals.py
+        → dominex_sync.apply_projection), так что смена должности в Dominex
+        сама закрывает или открывает доступ — отдельной синхронизации прав
+        для этого не нужно.
+        """
+        if self.organization_id is None:
+            return False
+        if self.infrastructure_access_override:
+            return True
+        if self.position is None:
+            return False
+        allowed = {
+            name.strip().casefold()
+            for name in getattr(settings, "INFRA_MANAGER_POSITIONS", [])
+        }
+        return self.position.name.strip().casefold() in allowed
 
     @property
     def full_name_ru(self):

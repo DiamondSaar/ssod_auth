@@ -36,11 +36,13 @@ from .forms import (
     ServiceClientGrantCreateForm,
     SSODAccessKeyCreateForm,
 )
-from accounts.services.dominex_client import fetch_oracle_status
+from accounts.services.dominex_client import fetch_infrastructure_summary, fetch_oracle_status
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.utils.timezone import localtime
 
 
 import hashlib
@@ -270,6 +272,95 @@ def account_products(request):
         "accounts/account_products.html",
         {
             "product_cards": product_cards,
+        },
+    )
+
+
+def _load_ratio(value):
+    """Ширина полосы загрузки в процентах, пригодная для inline-стиля.
+
+    Возвращает None, если метрики нет — шаблон в этом случае рисует «н/д»,
+    а не пустую полосу, которую легко прочитать как «загрузка 0%».
+    """
+    if value is None:
+        return None
+    try:
+        return max(0, min(100, int(round(float(value)))))
+    except (TypeError, ValueError):
+        return None
+
+
+def _load_tone(value):
+    """Пороги окраски из дизайн-пакета (README-ЛК-руководителя):
+    <70% синий, 70–84% оранжевый, ≥85% красный."""
+    ratio = _load_ratio(value)
+    if ratio is None:
+        return "unknown"
+    if ratio >= 85:
+        return "critical"
+    if ratio >= 70:
+        return "warning"
+    return "normal"
+
+
+@login_required
+def infrastructure(request):
+    """
+    Сводка по инфраструктуре организации — плитка «Инфраструктура
+    предприятия» в личном кабинете.
+
+    Страница только для чтения и только для руководителя/системного
+    администратора своей организации (CustomUser.can_view_infrastructure).
+    Данные целиком приходят из Dominex одним агрегированным ответом:
+    карточки оборудования — из его БД, живая загрузка и проблемы — из
+    Zabbix, который опрашивает сам Dominex (см. dominex/app/core/
+    infrastructure_summary.py). ssod_auth сюда ничего не досчитывает, кроме
+    оформления полос загрузки.
+
+    Если Dominex недоступен — страница всё равно открывается и честно
+    сообщает, что источник не отвечает.
+    """
+
+    if not request.user.can_view_infrastructure:
+        raise Http404
+
+    summary = fetch_infrastructure_summary(request.user.username)
+
+    equipment = []
+    for item in (summary or {}).get("equipment", []):
+        equipment.append(
+            {
+                **item,
+                "cpu_ratio": _load_ratio(item.get("cpu_pct")),
+                "cpu_tone": _load_tone(item.get("cpu_pct")),
+                "ram_ratio": _load_ratio(item.get("ram_pct")),
+                "ram_tone": _load_tone(item.get("ram_pct")),
+                "disk_ratio": _load_ratio(item.get("disk_pct")),
+                "disk_tone": _load_tone(item.get("disk_pct")),
+            }
+        )
+
+    # generated_at приходит строкой ISO — приводим к datetime здесь, чтобы
+    # шаблон мог отформатировать её штатным фильтром date в часовом поясе
+    # пользователя, а не печатать сырую строку с "+00:00". Проверка на
+    # is_aware — на случай, если ответ придёт без смещения: localtime()
+    # на наивной дате падает, а из-за отметки времени страница падать не
+    # должна.
+    generated_at = parse_datetime((summary or {}).get("generated_at") or "")
+    if generated_at is not None and timezone.is_aware(generated_at):
+        generated_at = localtime(generated_at)
+
+    return render(
+        request,
+        "accounts/infrastructure.html",
+        {
+            "summary": summary,
+            "generated_at": generated_at,
+            "equipment": equipment,
+            "counters": (summary or {}).get("counters") or {},
+            "problems": (summary or {}).get("problems") or [],
+            "sources": (summary or {}).get("sources") or [],
+            "organization": (summary or {}).get("organization") or {},
         },
     )
 

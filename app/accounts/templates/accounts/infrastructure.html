@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Инфраструктура предприятия — ССОД Auth Center{% endblock %}
+
+{% block main_class %}infra-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/infrastructure.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{% include "components/app_header.html" %}
+
+<div class="infra-breadcrumb">
+    <a href="{% url 'accounts:account_home' %}">Личный кабинет</a>
+    <span>/</span>
+    <span class="infra-breadcrumb-current">Инфраструктура предприятия</span>
+    <span class="infra-spacer"></span>
+    {% if generated_at %}
+        <span class="infra-updated">
+            <span class="infra-dot infra-dot-ok"></span>
+            Данные обновлены {{ generated_at|date:"d.m H:i" }} · Dominex · Zabbix
+        </span>
+    {% endif %}
+</div>
+
+{% if not summary %}
+
+    {# Dominex не ответил. Страница обязана открыться и объяснить это,
+       а не показать пустые таблицы, которые читаются как «оборудования нет». #}
+    <div class="infra-alert">
+        <h2>Сводка сейчас недоступна</h2>
+        <p>
+            Dominex не ответил на запрос сводки по инфраструктуре. Данные об
+            оборудовании хранятся там, поэтому показать нечего. Попробуйте
+            обновить страницу позже — если сообщение повторяется, сообщите
+            в поддержку ССОД.
+        </p>
+    </div>
+
+{% else %}
+
+    <header class="infra-org">
+        <div class="infra-org-top">
+            <div class="infra-org-title">
+                <div class="infra-badges">
+                    <span class="infra-chip infra-chip-info">Организация · клиент</span>
+                    {% if organization.inn %}
+                        <span class="infra-chip">ИНН {{ organization.inn }}</span>
+                    {% endif %}
+                </div>
+                <h1>{{ organization.name }}</h1>
+            </div>
+        </div>
+
+        <div class="infra-org-facts">
+            <div class="infra-fact">
+                <div class="infra-fact-label">Оборудования на обслуживании</div>
+                <div class="infra-fact-value">{{ counters.equipment_total|default:"0" }}</div>
+            </div>
+            <div class="infra-fact">
+                <div class="infra-fact-label">Серверов</div>
+                <div class="infra-fact-value">
+                    {{ counters.servers_total|default:"0" }}
+                    <span class="infra-fact-note">
+                        {{ counters.servers_physical|default:"0" }} физ. ·
+                        {{ counters.servers_virtual|default:"0" }} вирт.
+                    </span>
+                </div>
+            </div>
+            <div class="infra-fact">
+                <div class="infra-fact-label">Под мониторингом</div>
+                <div class="infra-fact-value">
+                    {{ counters.monitored|default:"0" }}
+                    {% if counters.unreachable %}
+                        <span class="infra-fact-note infra-text-bad">
+                            {{ counters.unreachable }} не отвечает
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="infra-fact {% if counters.problems_total %}infra-fact-warn{% endif %}">
+                <div class="infra-fact-label">Открытых проблем</div>
+                <div class="infra-fact-value">
+                    {{ counters.problems_total|default:"0" }}
+                    {% if counters.problems_critical %}
+                        <span class="infra-fact-note infra-text-bad">
+                            {{ counters.problems_critical }} критичных
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="infra-columns">
+
+        <section class="infra-section">
+            <div class="infra-section-head">
+                <h2>Обслуживаемое оборудование</h2>
+                <span class="infra-spacer"></span>
+                <span class="infra-section-note">параметры — Dominex, загрузка — Zabbix</span>
+            </div>
+
+            {% if equipment %}
+                <div class="infra-table-scroll">
+                    <table class="infra-table">
+                        <thead>
+                            <tr>
+                                <th>Оборудование</th>
+                                <th>Процессор</th>
+                                <th>Память</th>
+                                <th>Диск</th>
+                                <th>Аптайм</th>
+                                <th>Состояние</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in equipment %}
+                                <tr>
+                                    <td class="infra-cell-name">
+                                        <div class="infra-name-line">
+                                            <span class="infra-name">{{ item.name|default:"—" }}</span>
+                                            <span class="infra-kind">{{ item.kind }}</span>
+                                        </div>
+                                        <div class="infra-sub mono">
+                                            {{ item.hostname|default:"—" }}{% if item.management_address %} · {{ item.management_address }}{% endif %}
+                                        </div>
+                                        <div class="infra-sub">
+                                            {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div class="infra-metric-top">
+                                            <span class="infra-sub">{{ item.cpu|default:"—" }}</span>
+                                            <span class="mono">
+                                                {% if item.cpu_ratio != None %}{{ item.cpu_pct|floatformat:0 }}%{% else %}н/д{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if item.cpu_ratio != None %}
+                                            <div class="infra-bar">
+                                                <div class="infra-bar-fill infra-bar-{{ item.cpu_tone }}"
+                                                     style="width: {{ item.cpu_ratio }}%"></div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="infra-metric-top">
+                                            <span class="infra-sub">{{ item.ram|default:"—" }}</span>
+                                            <span class="mono">
+                                                {% if item.ram_ratio != None %}{{ item.ram_pct|floatformat:0 }}%{% else %}н/д{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if item.ram_ratio != None %}
+                                            <div class="infra-bar">
+                                                <div class="infra-bar-fill infra-bar-{{ item.ram_tone }}"
+                                                     style="width: {{ item.ram_ratio }}%"></div>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="infra-metric-top">
+                                            <span class="infra-sub mono">
+                                                {% if item.disk_mount %}{{ item.disk_mount }}{% elif item.disks %}{{ item.disks|length }} дисков{% else %}—{% endif %}
+                                            </span>
+                                            <span class="mono">
+                                                {% if item.disk_ratio != None %}{{ item.disk_pct|floatformat:0 }}%{% else %}н/д{% endif %}
+                                            </span>
+                                        </div>
+                                        {% if item.disk_ratio != None %}
+                                            <div class="infra-bar">
+                                                <div class="infra-bar-fill infra-bar-{{ item.disk_tone }}"
+                                                     style="width: {{ item.disk_ratio }}%"></div>
+                                            </div>
+                                        {% endif %}
+                                        {% if item.disks %}
+                                            <div class="infra-sub">
+                                                {% for disk in item.disks %}{{ disk.model|default:disk.name }}{% if disk.capacity %} {{ disk.capacity }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="mono">{{ item.uptime|default:"—" }}</td>
+
+                                    <td>
+                                        {% if not item.zabbix_hostid %}
+                                            <span class="infra-state infra-state-unknown">нет в мониторинге</span>
+                                        {% elif not item.monitored %}
+                                            <span class="infra-state infra-state-unknown">мониторинг отключён</span>
+                                        {% elif item.available == False %}
+                                            <span class="infra-state infra-state-bad">не отвечает</span>
+                                        {% elif item.available == None %}
+                                            <span class="infra-state infra-state-unknown">нет данных</span>
+                                        {% else %}
+                                            <span class="infra-state infra-state-ok">работает</span>
+                                        {% endif %}
+
+                                        {% if item.problems %}
+                                            <span class="infra-state infra-state-warn">
+                                                {{ item.problems|length }} проблем.
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="infra-empty">
+                    За вашей организацией в Dominex пока не закреплено оборудование.
+                    Карточки заводит инженер ССОД — обратитесь к ответственному
+                    за обслуживание.
+                </div>
+            {% endif %}
+        </section>
+
+        <aside class="infra-aside">
+
+            <div class="infra-panel {% if problems %}infra-panel-warn{% endif %}">
+                <div class="infra-panel-head">
+                    <h2>Открытые проблемы</h2>
+                    <span class="infra-spacer"></span>
+                    <span class="mono">{{ problems|length }}</span>
+                </div>
+                {% for problem in problems %}
+                    <div class="infra-problem">
+                        <div class="infra-problem-top">
+                            <span class="infra-sev infra-sev-{{ problem.severity }}">
+                                {{ problem.severity_label }}
+                            </span>
+                            <span class="mono infra-problem-age">{{ problem.age }}</span>
+                        </div>
+                        <div class="infra-problem-name">
+                            {% if problem.host %}<strong>{{ problem.host }}</strong> — {% endif %}{{ problem.name }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="infra-empty infra-empty-small">
+                        Открытых проблем нет.
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="infra-panel">
+                <div class="infra-panel-head">
+                    <h2>Источники данных</h2>
+                </div>
+                <div class="infra-sources">
+                    {% for source in sources %}
+                        <div class="infra-source">
+                            <span class="infra-source-name">{{ source.name }}</span>
+                            <span class="infra-source-state infra-source-{{ source.status }}">
+                                {% if source.status == "online" %}онлайн
+                                {% elif source.status == "offline" %}не отвечает
+                                {% else %}не подключён{% endif %}
+                            </span>
+                            {% if source.detail %}
+                                <span class="infra-source-detail">{{ source.detail }}</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="infra-panel-foot">
+                    Сводка обновляется раз в 10 минут — страница не опрашивает
+                    оборудование при каждом открытии.
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+{% endif %}
+
+{% endblock %}
