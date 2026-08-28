@@ -163,19 +163,32 @@
                                         {% endif %}
                                     </td>
 
+                                    {# Раньше здесь была только самая заполненная
+                                       файловая система, и сервер с C: 61% и
+                                       D: 95% показывал 61% — ту, из-за которой
+                                       звонить как раз не придётся. Теперь
+                                       перечисляются все, по убыванию
+                                       заполненности (порядок задаёт Dominex). #}
                                     <td>
-                                        <div class="infra-metric-top">
-                                            <span class="infra-sub mono">
-                                                {% if item.disk_mount %}{{ item.disk_mount }}{% elif item.disks %}{{ item.disks|length }} дисков{% else %}—{% endif %}
-                                            </span>
-                                            <span class="mono">
-                                                {% if item.disk_ratio != None %}{{ item.disk_pct|floatformat:0 }}%{% else %}н/д{% endif %}
-                                            </span>
-                                        </div>
-                                        {% if item.disk_ratio != None %}
-                                            <div class="infra-bar">
-                                                <div class="infra-bar-fill infra-bar-{{ item.disk_tone }}"
-                                                     style="width: {{ item.disk_ratio }}%"></div>
+                                        {% if item.filesystems %}
+                                            {% for fs in item.filesystems %}
+                                                <div class="infra-fs">
+                                                    <div class="infra-metric-top">
+                                                        <span class="infra-sub mono">{{ fs.mount }}</span>
+                                                        <span class="mono">{{ fs.used_pct|floatformat:0 }}%</span>
+                                                    </div>
+                                                    <div class="infra-bar">
+                                                        <div class="infra-bar-fill infra-bar-{{ fs.tone }}"
+                                                             style="width: {{ fs.ratio }}%"></div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <div class="infra-metric-top">
+                                                <span class="infra-sub mono">
+                                                    {% if item.disks %}{{ item.disks|length }} дисков{% else %}—{% endif %}
+                                                </span>
+                                                <span class="mono">н/д</span>
                                             </div>
                                         {% endif %}
                                         {% if item.disks %}

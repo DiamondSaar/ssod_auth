@@ -276,6 +276,35 @@ def account_products(request):
     )
 
 
+def _decorate_equipment(item):
+    """Добавляет к строке оборудования только оформление полос загрузки —
+    ширину и тон. Считать тут нечего: сводку целиком собирает Dominex.
+
+    Полосы нужны по каждой файловой системе, а не только по самой
+    заполненной: у сервера с C: на 61% и D: на 95% в таблице было видно
+    лишь C:, то есть ровно ту, из-за которой звонить не придётся
+    (2026-08-28). Вложенные ВМ оформляются тем же кодом.
+    """
+    return {
+        **item,
+        "cpu_ratio": _load_ratio(item.get("cpu_pct")),
+        "cpu_tone": _load_tone(item.get("cpu_pct")),
+        "ram_ratio": _load_ratio(item.get("ram_pct")),
+        "ram_tone": _load_tone(item.get("ram_pct")),
+        "disk_ratio": _load_ratio(item.get("disk_pct")),
+        "disk_tone": _load_tone(item.get("disk_pct")),
+        "filesystems": [
+            {
+                **fs,
+                "ratio": _load_ratio(fs.get("used_pct")),
+                "tone": _load_tone(fs.get("used_pct")),
+            }
+            for fs in (item.get("filesystems") or [])
+        ],
+        "nested": [_decorate_equipment(child) for child in (item.get("nested") or [])],
+    }
+
+
 def _load_ratio(value):
     """Ширина полосы загрузки в процентах, пригодная для inline-стиля.
 
@@ -326,19 +355,7 @@ def infrastructure(request):
 
     summary = fetch_infrastructure_summary(request.user.username)
 
-    equipment = []
-    for item in (summary or {}).get("equipment", []):
-        equipment.append(
-            {
-                **item,
-                "cpu_ratio": _load_ratio(item.get("cpu_pct")),
-                "cpu_tone": _load_tone(item.get("cpu_pct")),
-                "ram_ratio": _load_ratio(item.get("ram_pct")),
-                "ram_tone": _load_tone(item.get("ram_pct")),
-                "disk_ratio": _load_ratio(item.get("disk_pct")),
-                "disk_tone": _load_tone(item.get("disk_pct")),
-            }
-        )
+    equipment = [_decorate_equipment(item) for item in (summary or {}).get("equipment", [])]
 
     # generated_at приходит строкой ISO — приводим к datetime здесь, чтобы
     # шаблон мог отформатировать её штатным фильтром date в часовом поясе
