@@ -47,7 +47,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 11px 20px;
+    padding: 11px 0;
     font-size: 12px;
     color: var(--infra-muted);
 }
@@ -87,7 +87,7 @@
 /* ─── Шапка организации ────────────────────────────────────────────────── */
 
 .infra-org {
-    margin: 0 20px;
+    margin: 0;
     background: var(--infra-bg-soft);
     border: 1px solid var(--infra-border);
     border-radius: 12px;
@@ -178,12 +178,81 @@
 
 /* ─── Две колонки: таблица оборудования + оперативная сводка ───────────── */
 
+/* Оболочка страницы: слева колонка переходов, справа содержимое.
+   До этого страница растягивалась на всю ширину монитора, и на 27" строка
+   оборудования расползалась так, что название и его состояние оказывались
+   на разных концах экрана. */
+.infra-shell {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+    max-width: 1580px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.infra-main { min-width: 0; }
+
+.infra-nav {
+    position: sticky;
+    top: 16px;
+    display: grid;
+    gap: 18px;
+    padding: 16px 0;
+}
+
+.infra-nav-group { display: grid; gap: 2px; }
+
+.infra-nav-label {
+    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--infra-muted-dim);
+}
+
+.infra-nav a {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 2px solid transparent;
+    font-size: 13px;
+    color: var(--infra-muted);
+    text-decoration: none;
+}
+
+.infra-nav a:hover {
+    color: var(--infra-text);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.infra-nav a.is-current {
+    color: var(--infra-text);
+    border-left-color: var(--infra-orange);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 900px) {
+    /* Колонка уходит наверх горизонтальной лентой, а не сжимается в
+       нечитаемый столбик. */
+    .infra-shell { grid-template-columns: minmax(0, 1fr); }
+    .infra-nav {
+        position: static;
+        grid-auto-flow: column;
+        grid-auto-columns: max-content;
+        overflow-x: auto;
+        gap: 10px;
+    }
+    .infra-nav-label { display: none; }
+}
+
 .infra-columns {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
     gap: 14px;
-    padding: 14px 20px 0;
+    padding: 14px 0 0;
 }
 
 .infra-section {
@@ -250,6 +319,35 @@
 
 .infra-cell-name {
     min-width: 220px;
+}
+
+/* Группа строк = одна физическая единица и работающие на ней ВМ. Рамка
+   вокруг <tbody> и есть та «общая зона», которую просили: сверху машина,
+   ниже — что на ней крутится. Группа без ВМ выглядит как обычная строка. */
+.infra-group + .infra-group > tr > td {
+    border-top: 1px solid var(--infra-border);
+}
+
+.infra-group-host {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.infra-group-host > tr:first-child > td {
+    border-top-color: var(--infra-border);
+}
+
+.infra-row-nested > td {
+    border-top-color: transparent;
+}
+
+.infra-row-nested > .infra-cell-name {
+    padding-left: 30px;
+}
+
+.infra-nest-mark {
+    margin-right: 5px;
+    color: var(--infra-muted-dim);
+    font-family: Consolas, ui-monospace, monospace;
 }
 
 .infra-name-line {
@@ -479,7 +577,7 @@
 }
 
 .infra-alert {
-    margin: 0 20px;
+    margin: 0;
     padding: 18px;
     background: rgba(255, 149, 0, 0.08);
     border: 1px solid rgba(255, 149, 0, 0.45);

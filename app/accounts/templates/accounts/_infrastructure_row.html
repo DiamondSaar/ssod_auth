@@ -1,0 +1,111 @@
+{% comment %}
+Одна строка таблицы оборудования. Вынесена в отдельный шаблон, потому что
+её же рисуют вложенные ВМ: включается с nested=True, и тогда строка идёт с
+отступом и меткой принадлежности. Ожидает: item, nested.
+{% endcomment %}
+<tr class="{% if nested %}infra-row-nested{% endif %}">
+    <td class="infra-cell-name">
+        <div class="infra-name-line">
+            {% if nested %}<span class="infra-nest-mark" aria-hidden="true">└</span>{% endif %}<span class="infra-name">{{ item.name|default:"—" }}</span>
+            <span class="infra-kind">{{ item.kind }}</span>
+        </div>
+        <div class="infra-sub mono">
+            {{ item.hostname|default:"—" }}{% if item.management_address %} · {{ item.management_address }}{% endif %}
+        </div>
+        <div class="infra-sub">
+            {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}
+        </div>
+    </td>
+
+    <td>
+        <div class="infra-metric-top">
+            <span class="infra-sub">{{ item.cpu|default:"—" }}</span>
+            <span class="mono">
+                {% if item.cpu_ratio != None %}{{ item.cpu_pct|floatformat:0 }}%{% else %}н/д{% endif %}
+            </span>
+        </div>
+        {% if item.cpu_ratio != None %}
+            <div class="infra-bar">
+                <div class="infra-bar-fill infra-bar-{{ item.cpu_tone }}"
+                     style="width: {{ item.cpu_ratio }}%"></div>
+            </div>
+        {% endif %}
+    </td>
+
+    <td>
+        <div class="infra-metric-top">
+            <span class="infra-sub">{{ item.ram|default:"—" }}</span>
+            <span class="mono">
+                {% if item.ram_ratio != None %}{{ item.ram_pct|floatformat:0 }}%{% else %}н/д{% endif %}
+            </span>
+        </div>
+        {% if item.ram_ratio != None %}
+            <div class="infra-bar">
+                <div class="infra-bar-fill infra-bar-{{ item.ram_tone }}"
+                     style="width: {{ item.ram_ratio }}%"></div>
+            </div>
+        {% endif %}
+    </td>
+
+    {% comment %}
+    Раньше здесь была только самая заполненная
+    файловая система, и сервер с C: 61% и D: 95%
+    показывал 61% — ту, из-за которой звонить
+    как раз не придётся. Теперь перечисляются
+    все, по имени тома (порядок задаёт Dominex).
+
+    Многострочный {# #} здесь не работает: в
+    Django это однострочный комментарий, и всё
+    остальное вывалилось бы на страницу текстом.
+    {% endcomment %}
+    <td>
+        {% if item.filesystems %}
+            {% for fs in item.filesystems %}
+                <div class="infra-fs">
+                    <div class="infra-metric-top">
+                        <span class="infra-sub mono">{{ fs.mount }}</span>
+                        <span class="mono">{{ fs.used_pct|floatformat:0 }}%</span>
+                    </div>
+                    <div class="infra-bar">
+                        <div class="infra-bar-fill infra-bar-{{ fs.tone }}"
+                             style="width: {{ fs.ratio }}%"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="infra-metric-top">
+                <span class="infra-sub mono">
+                    {% if item.disks %}{{ item.disks|length }} дисков{% else %}—{% endif %}
+                </span>
+                <span class="mono">н/д</span>
+            </div>
+        {% endif %}
+        {% if item.disks %}
+            <div class="infra-sub">
+                {% for disk in item.disks %}{{ disk.model|default:disk.name }}{% if disk.capacity %} {{ disk.capacity }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
+            </div>
+        {% endif %}
+    </td>
+
+    <td class="mono">{{ item.uptime|default:"—" }}</td>
+
+    <td>
+        {% if not item.zabbix_hostid %}
+            <span class="infra-state infra-state-unknown">нет в мониторинге</span>
+        {% elif not item.monitored %}
+            <span class="infra-state infra-state-unknown">мониторинг отключён</span>
+        {% elif item.available == False %}
+            <span class="infra-state infra-state-bad">не отвечает</span>
+        {% elif item.available == None %}
+            <span class="infra-state infra-state-unknown">нет данных</span>
+        {% else %}
+            <span class="infra-state infra-state-ok">работает</span>
+        {% endif %}
+
+        {% if item.problems %}
+            <span class="infra-state infra-state-warn">
+                {{ item.problems|length }} проблем.
+            </span>
+        {% endif %}
+    </td>
+</tr>

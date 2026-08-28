@@ -13,6 +13,31 @@
 
 {% include "components/app_header.html" %}
 
+<div class="infra-shell">
+
+{% comment %}
+Колонка переходов слева. Страница показывается руководителю, который сюда
+приходит из ЛК и должен уметь вернуться и перейти дальше, не пользуясь
+кнопкой «назад» в браузере. Якоря ведут по самой странице.
+{% endcomment %}
+<nav class="infra-nav">
+    <div class="infra-nav-group">
+        <div class="infra-nav-label">Личный кабинет</div>
+        <a href="{% url 'accounts:account_home' %}">Обзор</a>
+        <a href="{% url 'accounts:account_products' %}">Продукты и доступы</a>
+        <a href="{% url 'accounts:repository_list' %}">Документы</a>
+        <a href="{% url 'accounts:security' %}">Безопасность</a>
+    </div>
+    <div class="infra-nav-group">
+        <div class="infra-nav-label">На этой странице</div>
+        <a href="#infra-equipment" class="is-current">Оборудование</a>
+        <a href="#infra-problems">Проблемы</a>
+        <a href="#infra-sources">Источники данных</a>
+    </div>
+</nav>
+
+<div class="infra-main">
+
 <div class="infra-breadcrumb">
     <a href="{% url 'accounts:account_home' %}">Личный кабинет</a>
     <span>/</span>
@@ -99,7 +124,7 @@
 
     <div class="infra-columns">
 
-        <section class="infra-section">
+        <section class="infra-section" id="infra-equipment">
             <div class="infra-section-head">
                 <h2>Обслуживаемое оборудование</h2>
                 <span class="infra-spacer"></span>
@@ -119,116 +144,21 @@
                                 <th>Состояние</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for item in equipment %}
-                                <tr>
-                                    <td class="infra-cell-name">
-                                        <div class="infra-name-line">
-                                            <span class="infra-name">{{ item.name|default:"—" }}</span>
-                                            <span class="infra-kind">{{ item.kind }}</span>
-                                        </div>
-                                        <div class="infra-sub mono">
-                                            {{ item.hostname|default:"—" }}{% if item.management_address %} · {{ item.management_address }}{% endif %}
-                                        </div>
-                                        <div class="infra-sub">
-                                            {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="infra-metric-top">
-                                            <span class="infra-sub">{{ item.cpu|default:"—" }}</span>
-                                            <span class="mono">
-                                                {% if item.cpu_ratio != None %}{{ item.cpu_pct|floatformat:0 }}%{% else %}н/д{% endif %}
-                                            </span>
-                                        </div>
-                                        {% if item.cpu_ratio != None %}
-                                            <div class="infra-bar">
-                                                <div class="infra-bar-fill infra-bar-{{ item.cpu_tone }}"
-                                                     style="width: {{ item.cpu_ratio }}%"></div>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-
-                                    <td>
-                                        <div class="infra-metric-top">
-                                            <span class="infra-sub">{{ item.ram|default:"—" }}</span>
-                                            <span class="mono">
-                                                {% if item.ram_ratio != None %}{{ item.ram_pct|floatformat:0 }}%{% else %}н/д{% endif %}
-                                            </span>
-                                        </div>
-                                        {% if item.ram_ratio != None %}
-                                            <div class="infra-bar">
-                                                <div class="infra-bar-fill infra-bar-{{ item.ram_tone }}"
-                                                     style="width: {{ item.ram_ratio }}%"></div>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-
-                                    {% comment %}
-                                    Раньше здесь была только самая заполненная
-                                    файловая система, и сервер с C: 61% и D: 95%
-                                    показывал 61% — ту, из-за которой звонить
-                                    как раз не придётся. Теперь перечисляются
-                                    все, по имени тома (порядок задаёт Dominex).
-
-                                    Многострочный {# #} здесь не работает: в
-                                    Django это однострочный комментарий, и всё
-                                    остальное вывалилось бы на страницу текстом.
-                                    {% endcomment %}
-                                    <td>
-                                        {% if item.filesystems %}
-                                            {% for fs in item.filesystems %}
-                                                <div class="infra-fs">
-                                                    <div class="infra-metric-top">
-                                                        <span class="infra-sub mono">{{ fs.mount }}</span>
-                                                        <span class="mono">{{ fs.used_pct|floatformat:0 }}%</span>
-                                                    </div>
-                                                    <div class="infra-bar">
-                                                        <div class="infra-bar-fill infra-bar-{{ fs.tone }}"
-                                                             style="width: {{ fs.ratio }}%"></div>
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
-                                        {% else %}
-                                            <div class="infra-metric-top">
-                                                <span class="infra-sub mono">
-                                                    {% if item.disks %}{{ item.disks|length }} дисков{% else %}—{% endif %}
-                                                </span>
-                                                <span class="mono">н/д</span>
-                                            </div>
-                                        {% endif %}
-                                        {% if item.disks %}
-                                            <div class="infra-sub">
-                                                {% for disk in item.disks %}{{ disk.model|default:disk.name }}{% if disk.capacity %} {{ disk.capacity }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </td>
-
-                                    <td class="mono">{{ item.uptime|default:"—" }}</td>
-
-                                    <td>
-                                        {% if not item.zabbix_hostid %}
-                                            <span class="infra-state infra-state-unknown">нет в мониторинге</span>
-                                        {% elif not item.monitored %}
-                                            <span class="infra-state infra-state-unknown">мониторинг отключён</span>
-                                        {% elif item.available == False %}
-                                            <span class="infra-state infra-state-bad">не отвечает</span>
-                                        {% elif item.available == None %}
-                                            <span class="infra-state infra-state-unknown">нет данных</span>
-                                        {% else %}
-                                            <span class="infra-state infra-state-ok">работает</span>
-                                        {% endif %}
-
-                                        {% if item.problems %}
-                                            <span class="infra-state infra-state-warn">
-                                                {{ item.problems|length }} проблем.
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                        {% comment %}
+                        Каждая единица оборудования — свой <tbody>: рамка
+                        группы и есть та «общая зона», внутри которой сверху
+                        стоит физическая машина, а под ней — её ВМ. Строка
+                        рисуется одним и тем же шаблоном, чтобы вложенная ВМ
+                        не разъезжалась с родителем по колонкам.
+                        {% endcomment %}
+                        {% for item in equipment %}
+                        <tbody class="infra-group{% if item.nested %} infra-group-host{% endif %}">
+                            {% include "accounts/_infrastructure_row.html" with item=item nested=False %}
+                            {% for child in item.nested %}
+                                {% include "accounts/_infrastructure_row.html" with item=child nested=True %}
                             {% endfor %}
                         </tbody>
+                        {% endfor %}
                     </table>
                 </div>
             {% else %}
@@ -242,7 +172,7 @@
 
         <aside class="infra-aside">
 
-            <div class="infra-panel {% if problems %}infra-panel-warn{% endif %}">
+            <div class="infra-panel {% if problems %}infra-panel-warn{% endif %}" id="infra-problems">
                 <div class="infra-panel-head">
                     <h2>Открытые проблемы</h2>
                     <span class="infra-spacer"></span>
@@ -267,7 +197,7 @@
                 {% endfor %}
             </div>
 
-            <div class="infra-panel">
+            <div class="infra-panel" id="infra-sources">
                 <div class="infra-panel-head">
                     <h2>Источники данных</h2>
                 </div>
@@ -297,4 +227,6 @@
 
 {% endif %}
 
+</div>{# /.infra-main #}
+</div>{# /.infra-shell #}
 {% endblock %}
