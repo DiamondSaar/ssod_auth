@@ -255,8 +255,18 @@
     padding: 14px 0 0;
 }
 
-.infra-section {
+/* Все секции контента — в одной колонке. Если бы каждая была отдельным
+   flex-ребёнком, при трёх и более секциях они начали бы обтекать правую
+   колонку, и оперативная сводка уехала бы в середину страницы. */
+.infra-stack {
     flex: 1 1 620px;
+    min-width: 0;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+}
+
+.infra-section {
     min-width: 0;
     background: var(--infra-card);
     border: 1px solid var(--infra-border);

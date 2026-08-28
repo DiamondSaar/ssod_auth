@@ -31,6 +31,8 @@
     <div class="infra-nav-group">
         <div class="infra-nav-label">На этой странице</div>
         <a href="#infra-equipment" class="is-current">Оборудование</a>
+        <a href="#infra-network">Сеть и каналы</a>
+        <a href="#infra-staff">Сотрудники</a>
         <a href="#infra-problems">Проблемы</a>
         <a href="#infra-sources">Источники данных</a>
     </div>
@@ -124,6 +126,13 @@
 
     <div class="infra-columns">
 
+        {% comment %}
+        Секции контента живут в одном стеке, а не отдельными flex-детьми:
+        иначе при трёх и более секциях они начинают обтекать правую
+        колонку и оперативная сводка оказывается посреди страницы.
+        {% endcomment %}
+        <div class="infra-stack">
+
         <section class="infra-section" id="infra-equipment">
             <div class="infra-section-head">
                 <h2>Обслуживаемое оборудование</h2>
@@ -169,6 +178,127 @@
                 </div>
             {% endif %}
         </section>
+
+        {% comment %}
+        Каналы связи. Руководителю здесь важны две вещи: какой канал
+        основной и кому звонить, когда интернет лёг. Адреса, шлюзы и DNS
+        лежат в том же свойстве карточки, но наружу не идут — инженерные
+        поля, тот же принцип, что и с паролями.
+        {% endcomment %}
+        <section class="infra-section" id="infra-network">
+            <div class="infra-section-head">
+                <h2>Сеть и каналы связи</h2>
+                <span class="infra-spacer"></span>
+                <span class="infra-section-note">каналы — Dominex, состояние устройства — Zabbix</span>
+            </div>
+
+            {% if network %}
+                <div class="infra-table-scroll">
+                    <table class="infra-table">
+                        <thead>
+                            <tr>
+                                <th>Оператор</th>
+                                <th>Назначение</th>
+                                <th>Заведён на</th>
+                                <th>Поддержка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for channel in network %}
+                                <tr>
+                                    <td>
+                                        <span class="infra-name">{{ channel.operator }}</span>
+                                        {% if channel.website %}
+                                            <div class="infra-sub">{{ channel.website }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if channel.is_active %}
+                                            <span class="infra-state infra-state-ok">основной</span>
+                                        {% else %}
+                                            <span class="infra-state">резерв</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="infra-sub">{{ channel.device|default:"—" }}</span>
+                                        {% if channel.device_available == False %}
+                                            <span class="infra-state infra-state-bad">не отвечает</span>
+                                        {% elif not channel.device_monitored %}
+                                            <span class="infra-state infra-state-unknown">нет в мониторинге</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="mono">{{ channel.support_phone|default:"—" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="infra-empty">
+                    Каналы связи не заведены в карточках оборудования. Их
+                    заполняет инженер ССОД в карточке маршрутизатора.
+                </div>
+            {% endif %}
+        </section>
+
+        {% comment %}
+        Сотрудники и доступы. Показываем всех активных сотрудников
+        организации, в том числе без доступов: для руководителя пустой
+        список — тоже ответ, а не повод спрятать человека.
+        {% endcomment %}
+        <section class="infra-section" id="infra-staff">
+            <div class="infra-section-head">
+                <h2>Сотрудники и доступы</h2>
+                <span class="infra-spacer"></span>
+                <span class="infra-section-note">
+                    {{ counters.staff_total|default:"0" }} чел., из них
+                    {{ counters.staff_with_login|default:"0" }} со входом в ССОД
+                </span>
+            </div>
+
+            {% if staff %}
+                <div class="infra-table-scroll">
+                    <table class="infra-table">
+                        <thead>
+                            <tr>
+                                <th>Сотрудник</th>
+                                <th>Должность</th>
+                                <th>Доступ к продуктам</th>
+                                <th>Вход в ССОД</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for person in staff %}
+                                <tr>
+                                    <td><span class="infra-name">{{ person.name|default:"—" }}</span></td>
+                                    <td class="infra-sub">{{ person.position|default:"—" }}</td>
+                                    <td class="infra-sub">
+                                        {% for product in person.products %}
+                                            {{ product }}{% if not forloop.last %} · {% endif %}
+                                        {% empty %}
+                                            доступов нет
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        {% if person.has_login %}
+                                            <span class="infra-state infra-state-ok">есть</span>
+                                        {% else %}
+                                            <span class="infra-state infra-state-unknown">нет</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="infra-empty">
+                    Сотрудники организации в Dominex пока не заведены.
+                </div>
+            {% endif %}
+        </section>
+
+        </div>{# /.infra-stack #}
 
         <aside class="infra-aside">
 
