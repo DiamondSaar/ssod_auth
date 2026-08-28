@@ -96,7 +96,14 @@
             <span class="infra-state infra-state-unknown">мониторинг отключён</span>
         {% elif item.available == False %}
             <span class="infra-state infra-state-bad">не отвечает</span>
-        {% elif item.available == None %}
+        {% elif item.available == None and not item.has_metrics %}
+            {% comment %}
+            Доступность неизвестна И показателей нет — вот это честно
+            «нет данных». Если показатели есть, узел работает: у хоста,
+            который опрашивается по API (гипервизор VMware), агентского
+            интерфейса не существует и доступность остаётся неизвестной
+            навсегда.
+            {% endcomment %}
             <span class="infra-state infra-state-unknown">нет данных</span>
         {% else %}
             <span class="infra-state infra-state-ok">работает</span>
