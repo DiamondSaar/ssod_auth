@@ -33,6 +33,7 @@
         <a href="#infra-equipment" class="is-current">Оборудование</a>
         <a href="#infra-network">Сеть и каналы</a>
         <a href="#infra-staff">Сотрудники</a>
+        <a href="#infra-domains">Домены</a>
         <a href="#infra-problems">Проблемы</a>
         <a href="#infra-sources">Источники данных</a>
     </div>
@@ -294,6 +295,82 @@
             {% else %}
                 <div class="infra-empty">
                     Сотрудники организации в Dominex пока не заведены.
+                </div>
+            {% endif %}
+        </section>
+
+        {% comment %}
+        Домены. Два вопроса руководителя: до какого числа оплачен и
+        принимает ли домен почту. Механизм проверки заимствован у портала
+        (WHOIS/RDAP + MX/SPF/DMARC), проверка идёт раз в сутки по
+        расписанию — реестры не любят частых запросов, да и срок
+        регистрации меняется раз в год.
+        {% endcomment %}
+        <section class="infra-section" id="infra-domains">
+            <div class="infra-section-head">
+                <h2>Домены</h2>
+                <span class="infra-spacer"></span>
+                {% if counters.domains_attention %}
+                    <span class="infra-section-note infra-text-bad">
+                        {{ counters.domains_attention }} требуют внимания
+                    </span>
+                {% else %}
+                    <span class="infra-section-note">срок оплаты и состояние почты</span>
+                {% endif %}
+            </div>
+
+            {% if domains %}
+                <div class="infra-table-scroll">
+                    <table class="infra-table">
+                        <thead>
+                            <tr>
+                                <th>Домен</th>
+                                <th>Назначение</th>
+                                <th>Оплачен до</th>
+                                <th>Почта</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for domain in domains %}
+                                <tr>
+                                    <td><span class="infra-name mono">{{ domain.name }}</span></td>
+                                    <td class="infra-sub">{{ domain.purpose|default:"—" }}</td>
+                                    <td>
+                                        {% if domain.registration_status == "expired" %}
+                                            <span class="infra-state infra-state-bad">срок истёк</span>
+                                        {% elif domain.registration_status == "expiring" %}
+                                            <span class="infra-state infra-state-warn">
+                                                через {{ domain.days_left }} дн.
+                                            </span>
+                                        {% elif domain.registration_status == "ok" %}
+                                            <span class="mono">{{ domain.expires_at }}</span>
+                                            <div class="infra-sub">осталось {{ domain.days_left }} дн.</div>
+                                        {% elif domain.registration_status == "unchecked" %}
+                                            <span class="infra-sub">ещё не проверялся</span>
+                                        {% else %}
+                                            <span class="infra-sub">{{ domain.registration_detail }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if domain.mail_status == "ok" %}
+                                            <span class="infra-state infra-state-ok">настроена</span>
+                                        {% elif domain.mail_status == "incomplete" %}
+                                            <span class="infra-state infra-state-warn">{{ domain.mail_detail }}</span>
+                                        {% elif domain.mail_status == "no_mail" %}
+                                            <span class="infra-sub">почта не принимается</span>
+                                        {% else %}
+                                            <span class="infra-sub">не проверялась</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="infra-empty">
+                    Домены организации не заведены. Их добавляет инженер ССОД
+                    в карточке организации.
                 </div>
             {% endif %}
         </section>

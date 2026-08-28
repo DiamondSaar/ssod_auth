@@ -380,6 +380,7 @@ def infrastructure(request):
             "organization": (summary or {}).get("organization") or {},
             "network": (summary or {}).get("network") or [],
             "staff": (summary or {}).get("staff") or [],
+            "domains": (summary or {}).get("domains") or [],
         },
     )
 
