@@ -31,9 +31,11 @@
     <div class="infra-nav-group">
         <div class="infra-nav-label">На этой странице</div>
         <a href="#infra-equipment" class="is-current">Оборудование</a>
-        <a href="#infra-network">Сеть и каналы</a>
+        <a href="#infra-backups">Резервные копии</a>
         <a href="#infra-staff">Сотрудники</a>
-        <a href="#infra-domains">Домены</a>
+        <a href="#infra-net-domains">Сеть и домены</a>
+        <a href="#infra-auth-points">Точки авторизации</a>
+        <a href="#infra-logins">Попытки входа</a>
         <a href="#infra-problems">Проблемы</a>
         <a href="#infra-sources">Источники данных</a>
     </div>
@@ -122,6 +124,37 @@
                     {% endif %}
                 </div>
             </div>
+            <div class="infra-fact">
+                <div class="infra-fact-label">Проверки копий</div>
+                <div class="infra-fact-value">
+                    {{ counters.backup_checks|default:"0" }}
+                    {% if counters.backup_problems %}
+                        <span class="infra-fact-note infra-text-bad">
+                            {{ counters.backup_problems }} не прошли
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="infra-fact">
+                <div class="infra-fact-label">Сотрудников</div>
+                <div class="infra-fact-value">
+                    {{ counters.staff_total|default:"0" }}
+                    <span class="infra-fact-note">
+                        {{ counters.staff_with_login|default:"0" }} со входом
+                    </span>
+                </div>
+            </div>
+            <div class="infra-fact {% if counters.domains_attention %}infra-fact-warn{% endif %}">
+                <div class="infra-fact-label">Домены</div>
+                <div class="infra-fact-value">
+                    {{ counters.domains_total|default:"0" }}
+                    {% if counters.domains_attention %}
+                        <span class="infra-fact-note infra-text-bad">
+                            {{ counters.domains_attention }} требуют внимания
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </header>
 
@@ -181,75 +214,71 @@
         </section>
 
         {% comment %}
-        Каналы связи. Руководителю здесь важны две вещи: какой канал
-        основной и кому звонить, когда интернет лёг. Адреса, шлюзы и DNS
-        лежат в том же свойстве карточки, но наружу не идут — инженерные
-        поля, тот же принцип, что и с паролями.
+        Резервные копии. Полной таблицы из макета (тип копии, время,
+        размер, глубина) собрать не из чего: скрипты бэкапа таких
+        элементов в Zabbix не заводят. Показываем ровно те проверки,
+        которые реально существуют, — придумывать колонки нельзя,
+        руководитель прочтёт их как факт.
         {% endcomment %}
-        <section class="infra-section" id="infra-network">
+        <section class="infra-section" id="infra-backups">
             <div class="infra-section-head">
-                <h2>Сеть и каналы связи</h2>
+                <h2>Резервное копирование</h2>
                 <span class="infra-spacer"></span>
-                <span class="infra-section-note">каналы — Dominex, состояние устройства — Zabbix</span>
+                <span class="infra-section-note">проверки из Zabbix</span>
             </div>
 
-            {% if network %}
+            {% if backups %}
                 <div class="infra-table-scroll">
                     <table class="infra-table">
                         <thead>
                             <tr>
-                                <th>Оператор</th>
-                                <th>Назначение</th>
-                                <th>Заведён на</th>
-                                <th>Поддержка</th>
+                                <th>Объект</th>
+                                <th>Проверка</th>
+                                <th>Результат</th>
+                                <th>Проверено</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for channel in network %}
+                            {% for check in backups %}
                                 <tr>
+                                    <td><span class="infra-name">{{ check.host|default:"—" }}</span></td>
+                                    <td class="infra-sub">{{ check.name }}</td>
                                     <td>
-                                        <span class="infra-name">{{ channel.operator }}</span>
-                                        {% if channel.website %}
-                                            <div class="infra-sub">{{ channel.website }}</div>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if channel.is_active %}
-                                            <span class="infra-state infra-state-ok">основной</span>
+                                        {% if check.state == "ok" %}
+                                            <span class="infra-state infra-state-ok">копия есть</span>
+                                        {% elif check.state == "problem" %}
+                                            <span class="infra-state infra-state-bad">копии нет</span>
+                                        {% elif check.state == "unknown" %}
+                                            <span class="infra-state infra-state-unknown">нет данных</span>
                                         {% else %}
-                                            <span class="infra-state">резерв</span>
+                                            <span class="mono">{{ check.value }}</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        <span class="infra-sub">{{ channel.device|default:"—" }}</span>
-                                        {% if channel.device_available == False %}
-                                            <span class="infra-state infra-state-bad">не отвечает</span>
-                                        {% elif not channel.device_monitored %}
-                                            <span class="infra-state infra-state-unknown">нет в мониторинге</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="mono">{{ channel.support_phone|default:"—" }}</td>
+                                    <td class="infra-sub mono">{{ check.age|default:"—" }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                <div class="infra-panel-foot">
+                    Это точечные проверки, а не полный журнал копий: время,
+                    размер и глубина хранения в мониторинг пока не передаются.
+                </div>
             {% else %}
                 <div class="infra-empty">
-                    Каналы связи не заведены в карточках оборудования. Их
-                    заполняет инженер ССОД в карточке маршрутизатора.
+                    Проверки резервного копирования по вашему оборудованию в
+                    мониторинг не заведены. Их настраивает инженер ССОД.
                 </div>
             {% endif %}
         </section>
 
         {% comment %}
-        Сотрудники и доступы. Показываем всех активных сотрудников
-        организации, в том числе без доступов: для руководителя пустой
-        список — тоже ответ, а не повод спрятать человека.
+        Сотрудники — сеткой ячеек, как в макете: ФИО, роль и строка
+        доступов. Таблица здесь избыточна, полей всего три.
         {% endcomment %}
         <section class="infra-section" id="infra-staff">
             <div class="infra-section-head">
-                <h2>Сотрудники и доступы</h2>
+                <h2>Сотрудники и роли</h2>
                 <span class="infra-spacer"></span>
                 <span class="infra-section-note">
                     {{ counters.staff_total|default:"0" }} чел., из них
@@ -258,39 +287,27 @@
             </div>
 
             {% if staff %}
-                <div class="infra-table-scroll">
-                    <table class="infra-table">
-                        <thead>
-                            <tr>
-                                <th>Сотрудник</th>
-                                <th>Должность</th>
-                                <th>Доступ к продуктам</th>
-                                <th>Вход в ССОД</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for person in staff %}
-                                <tr>
-                                    <td><span class="infra-name">{{ person.name|default:"—" }}</span></td>
-                                    <td class="infra-sub">{{ person.position|default:"—" }}</td>
-                                    <td class="infra-sub">
-                                        {% for product in person.products %}
-                                            {{ product }}{% if not forloop.last %} · {% endif %}
-                                        {% empty %}
-                                            доступов нет
-                                        {% endfor %}
-                                    </td>
-                                    <td>
-                                        {% if person.has_login %}
-                                            <span class="infra-state infra-state-ok">есть</span>
-                                        {% else %}
-                                            <span class="infra-state infra-state-unknown">нет</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="infra-people">
+                    {% for person in staff %}
+                        <div class="infra-person">
+                            <div class="infra-person-top">
+                                <span class="infra-name">{{ person.name|default:"—" }}</span>
+                                {% if person.position %}
+                                    <span class="infra-role">{{ person.position }}</span>
+                                {% endif %}
+                                {% if person.has_login %}
+                                    <span class="infra-role infra-role-login">вход в ССОД</span>
+                                {% endif %}
+                            </div>
+                            <div class="infra-sub mono">
+                                {% for product in person.products %}
+                                    {{ product }}{% if not forloop.last %} · {% endif %}
+                                {% empty %}
+                                    доступов к продуктам нет
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             {% else %}
                 <div class="infra-empty">
@@ -300,80 +317,93 @@
         </section>
 
         {% comment %}
-        Домены. Два вопроса руководителя: до какого числа оплачен и
-        принимает ли домен почту. Механизм проверки заимствован у портала
-        (WHOIS/RDAP + MX/SPF/DMARC), проверка идёт раз в сутки по
-        расписанию — реестры не любят частых запросов, да и срок
-        регистрации меняется раз в год.
+        Сеть и домены — две карточки в ряд, как в макете, а не двумя
+        полосами на всю ширину: полей в каждой мало, и растянутая на весь
+        экран строка из двух значений читается хуже узкой карточки.
         {% endcomment %}
-        <section class="infra-section" id="infra-domains">
-            <div class="infra-section-head">
-                <h2>Домены</h2>
-                <span class="infra-spacer"></span>
-                {% if counters.domains_attention %}
-                    <span class="infra-section-note infra-text-bad">
-                        {{ counters.domains_attention }} требуют внимания
-                    </span>
-                {% else %}
-                    <span class="infra-section-note">срок оплаты и состояние почты</span>
-                {% endif %}
-            </div>
+        <div class="infra-pair" id="infra-net-domains">
 
-            {% if domains %}
-                <div class="infra-table-scroll">
-                    <table class="infra-table">
-                        <thead>
-                            <tr>
-                                <th>Домен</th>
-                                <th>Назначение</th>
-                                <th>Оплачен до</th>
-                                <th>Почта</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for domain in domains %}
-                                <tr>
-                                    <td><span class="infra-name mono">{{ domain.name }}</span></td>
-                                    <td class="infra-sub">{{ domain.purpose|default:"—" }}</td>
-                                    <td>
-                                        {% if domain.registration_status == "expired" %}
-                                            <span class="infra-state infra-state-bad">срок истёк</span>
-                                        {% elif domain.registration_status == "expiring" %}
-                                            <span class="infra-state infra-state-warn">
-                                                через {{ domain.days_left }} дн.
-                                            </span>
-                                        {% elif domain.registration_status == "ok" %}
-                                            <span class="mono">{{ domain.expires_at }}</span>
-                                            <div class="infra-sub">осталось {{ domain.days_left }} дн.</div>
-                                        {% elif domain.registration_status == "unchecked" %}
-                                            <span class="infra-sub">ещё не проверялся</span>
-                                        {% else %}
-                                            <span class="infra-sub">{{ domain.registration_detail }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if domain.mail_status == "ok" %}
-                                            <span class="infra-state infra-state-ok">настроена</span>
-                                        {% elif domain.mail_status == "incomplete" %}
-                                            <span class="infra-state infra-state-warn">{{ domain.mail_detail }}</span>
-                                        {% elif domain.mail_status == "no_mail" %}
-                                            <span class="infra-sub">почта не принимается</span>
-                                        {% else %}
-                                            <span class="infra-sub">не проверялась</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <section class="infra-section">
+                <div class="infra-section-head">
+                    <h2>Сеть и каналы связи</h2>
                 </div>
-            {% else %}
-                <div class="infra-empty">
-                    Домены организации не заведены. Их добавляет инженер ССОД
-                    в карточке организации.
+                {% if network %}
+                    <div class="infra-rows">
+                        {% for channel in network %}
+                            <div class="infra-row">
+                                <span class="infra-row-main">
+                                    {{ channel.operator }}
+                                    <span class="infra-sub">{{ channel.role }}</span>
+                                </span>
+                                <span class="infra-sub mono">{{ channel.support_phone|default:"" }}</span>
+                                {% if channel.device_available == False %}
+                                    <span class="infra-dot infra-dot-bad" title="устройство не отвечает"></span>
+                                {% elif channel.device_monitored %}
+                                    <span class="infra-dot infra-dot-ok" title="устройство отвечает"></span>
+                                {% else %}
+                                    <span class="infra-dot" title="нет в мониторинге"></span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="infra-empty">
+                        Каналы связи не заведены в карточках оборудования.
+                        Их заполняет инженер ССОД в карточке маршрутизатора.
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="infra-section" id="infra-domains">
+                <div class="infra-section-head">
+                    <h2>Домены</h2>
+                    <span class="infra-spacer"></span>
+                    {% if counters.domains_attention %}
+                        <span class="infra-section-note infra-text-bad">
+                            {{ counters.domains_attention }} требуют внимания
+                        </span>
+                    {% endif %}
                 </div>
-            {% endif %}
-        </section>
+                {% if domains %}
+                    <div class="infra-rows">
+                        {% for domain in domains %}
+                            <div class="infra-row">
+                                <span class="infra-row-main mono">
+                                    {{ domain.name }}
+                                    <span class="infra-sub">{{ domain.purpose|default:"" }}</span>
+                                </span>
+                                {% if domain.registration_status == "expired" %}
+                                    <span class="infra-state infra-state-bad">срок истёк</span>
+                                {% elif domain.registration_status == "expiring" %}
+                                    <span class="infra-state infra-state-warn">через {{ domain.days_left }} дн.</span>
+                                {% elif domain.registration_status == "ok" %}
+                                    <span class="mono infra-sub">{{ domain.expires_at }}</span>
+                                {% else %}
+                                    <span class="infra-sub">не проверялся</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="infra-empty">
+                        Домены организации не заведены. Их добавляет инженер
+                        ССОД в карточке организации.
+                    </div>
+                {% endif %}
+
+                {% comment %}
+                Лицензии ПО — под доменами, как в макете. Наполняется
+                свойством «Установленное ПО» на карточках оборудования.
+                {% endcomment %}
+                <div class="infra-panel-foot">
+                    <div class="infra-fact-label">Лицензии ПО</div>
+                    <div class="infra-sub">
+                        Учёт установленного ПО ведётся в карточках оборудования
+                        и здесь пока не заполнен.
+                    </div>
+                </div>
+            </section>
+        </div>
 
         </div>{# /.infra-stack #}
 
@@ -402,6 +432,103 @@
                         Открытых проблем нет.
                     </div>
                 {% endfor %}
+            </div>
+
+
+            {% comment %}
+            Точки авторизации. Секреты сюда не попадают ни при каких
+            условиях: только адрес, протокол, порт и СПОСОБ входа.
+            Пароли и ключи остаются в консоли инженера — прямое
+            требование дизайн-пакета.
+            {% endcomment %}
+            <div class="infra-panel" id="infra-auth-points">
+                <div class="infra-panel-head">
+                    <h2>Точки авторизации</h2>
+                    <span class="infra-spacer"></span>
+                    <span class="mono">{{ auth_points|length }}</span>
+                </div>
+                {% for point in auth_points %}
+                    <div class="infra-authpoint">
+                        <div class="infra-authpoint-main">
+                            <div>{{ point.host|default:"—" }}</div>
+                            <div class="infra-sub mono">
+                                {{ point.endpoint|default:"" }}{% if point.method %} · {{ point.method }}{% endif %}
+                            </div>
+                        </div>
+                        {% if point.protocol %}
+                            <span class="infra-proto mono">
+                                {{ point.protocol }}{% if point.port %} · {{ point.port }}{% endif %}
+                            </span>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="infra-empty infra-empty-small">
+                        Учётные данные в карточках оборудования не заполнены.
+                    </div>
+                {% endfor %}
+                <div class="infra-panel-foot">
+                    Пароли и ключи — в консоли инженера, класс доступа E и выше.
+                </div>
+            </div>
+
+            {% comment %}
+            Попытки входа. Разбивка считается по узлам этой организации,
+            и спарклайн тоже — иначе руководитель видел бы чужой брутфорс
+            как свой.
+            {% endcomment %}
+            <div class="infra-panel" id="infra-logins">
+                <div class="infra-panel-head">
+                    <h2>Попытки входа · 24ч</h2>
+                    <span class="infra-spacer"></span>
+                    <span class="infra-sub">Graylog</span>
+                </div>
+                {% if logins.available %}
+                    <div class="infra-logins-body">
+                        <div class="infra-logins-top">
+                            <span class="infra-logins-number {% if logins.failed_total %}infra-text-bad{% endif %}">
+                                {{ logins.failed_total }}
+                            </span>
+                            <span class="infra-sub">неуспешных попыток</span>
+                        </div>
+
+                        {% if logins.sparkline %}
+                            <div class="infra-spark">
+                                {% for value in logins.sparkline %}
+                                    <span class="infra-spark-bar" style="height: {{ value|default:0 }}%"></span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="infra-logins-rows">
+                            {% for row in logins.by_host %}
+                                <div class="infra-logins-row">
+                                    <span class="infra-sub">{{ row.host }}</span>
+                                    <span class="mono {% if row.failed %}infra-text-bad{% endif %}">
+                                        {{ row.failed }}
+                                    </span>
+                                </div>
+                            {% empty %}
+                                <div class="infra-sub">Событий входа по вашим узлам за сутки нет.</div>
+                            {% endfor %}
+                            {% if logins.accepted_total %}
+                                <div class="infra-logins-row">
+                                    <span class="infra-sub">успешных входов</span>
+                                    <span class="mono">{{ logins.accepted_total }}</span>
+                                </div>
+                            {% endif %}
+                            {% if logins.blocked_total %}
+                                <div class="infra-logins-row">
+                                    <span class="infra-sub">заблокировано</span>
+                                    <span class="mono">{{ logins.blocked_total }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="infra-empty infra-empty-small">
+                        {{ logins.detail|default:"Данные о входах недоступны." }}
+                    </div>
+                {% endif %}
             </div>
 
             <div class="infra-panel" id="infra-sources">

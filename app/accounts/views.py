@@ -332,6 +332,27 @@ def _load_tone(value):
     return "normal"
 
 
+def _decorate_logins(logins):
+    """Переводит столбики спарклайна в проценты от максимума.
+
+    Dominex отдаёт количества за час — рисовать их как высоту в процентах
+    нельзя: 1380 попыток превратились бы в столбик высотой 1380% и
+    вылезли бы за карточку. Нормализуем здесь, потому что это чисто
+    оформительский пересчёт, а не данные.
+    """
+    values = logins.get("sparkline") or []
+    peak = max(values) if values else 0
+    return {
+        **logins,
+        "sparkline": [
+            # Минимум 4% — иначе тихий час выглядит как разрыв в графике,
+            # а не как «попыток почти не было».
+            max(4, round(value / peak * 100)) if peak else 4
+            for value in values
+        ],
+    }
+
+
 @login_required
 def infrastructure(request):
     """
@@ -381,6 +402,9 @@ def infrastructure(request):
             "network": (summary or {}).get("network") or [],
             "staff": (summary or {}).get("staff") or [],
             "domains": (summary or {}).get("domains") or [],
+            "backups": (summary or {}).get("backups") or [],
+            "auth_points": (summary or {}).get("auth_points") or [],
+            "logins": _decorate_logins((summary or {}).get("logins") or {}),
         },
     )
 

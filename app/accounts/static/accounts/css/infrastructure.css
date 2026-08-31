@@ -613,3 +613,151 @@
         position: static;
     }
 }
+
+/* ─── Сотрудники сеткой (по макету, вместо таблицы) ───────────────────── */
+
+.infra-people {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.infra-person {
+    padding: 9px 14px;
+    border-right: 1px solid var(--infra-border-inner);
+    border-bottom: 1px solid var(--infra-border-inner);
+}
+
+.infra-person-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    margin-bottom: 3px;
+}
+
+.infra-role {
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--infra-border);
+    font-size: 10px;
+    color: var(--infra-muted);
+    white-space: nowrap;
+}
+
+.infra-role-login {
+    border-color: rgba(34, 197, 94, 0.38);
+    color: var(--infra-green);
+}
+
+/* ─── Пара «Сеть» + «Домены» в один ряд ──────────────────────────────── */
+
+.infra-pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px;
+}
+
+/* Компактные строки «значение — состояние» вместо таблицы: полей мало,
+   таблица на всю ширину под них выглядит пустой. */
+.infra-rows {
+    display: grid;
+}
+
+.infra-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--infra-border-inner);
+    font-size: 13px;
+}
+
+.infra-row:first-child {
+    border-top: none;
+}
+
+.infra-row-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.infra-dot-bad {
+    background: var(--infra-red);
+}
+
+/* ─── Точки авторизации ───────────────────────────────────────────────── */
+
+.infra-authpoint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border-top: 1px solid var(--infra-border-inner);
+    font-size: 12.5px;
+}
+
+.infra-authpoint-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.infra-proto {
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: rgba(31, 122, 224, 0.16);
+    border: 1px solid rgba(31, 122, 224, 0.35);
+    color: #8ec4ff;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* ─── Попытки входа ───────────────────────────────────────────────────── */
+
+.infra-logins-body {
+    padding: 10px 13px;
+}
+
+.infra-logins-top {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.infra-logins-number {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+/* Спарклайн: столбики в процентах от максимума, высоту считает шаблон.
+   Минимальная высота — чтобы нулевые часы не выглядели дырой в графике. */
+.infra-spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 34px;
+}
+
+.infra-spark-bar {
+    flex: 1;
+    min-height: 3px;
+    background: rgba(143, 162, 189, 0.45);
+    border-radius: 1px;
+}
+
+.infra-logins-rows {
+    display: grid;
+    gap: 5px;
+    margin-top: 9px;
+    font-size: 12px;
+}
+
+.infra-logins-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
