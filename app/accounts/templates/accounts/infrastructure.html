@@ -132,6 +132,10 @@
                         <span class="infra-fact-note infra-text-bad">
                             {{ counters.backup_problems }} не прошли
                         </span>
+                    {% elif counters.backup_unchecked %}
+                        <span class="infra-fact-note infra-text-bad">
+                            {{ counters.backup_unchecked }} не работают
+                        </span>
                     {% endif %}
                 </div>
             </div>
@@ -248,6 +252,10 @@
                                             <span class="infra-state infra-state-ok">копия есть</span>
                                         {% elif check.state == "problem" %}
                                             <span class="infra-state infra-state-bad">копии нет</span>
+                                        {% elif check.state == "broken" %}
+                                            <span class="infra-state infra-state-bad">проверка не работает</span>
+                                        {% elif check.state == "never" %}
+                                            <span class="infra-state infra-state-warn">ни разу не выполнялась</span>
                                         {% elif check.state == "unknown" %}
                                             <span class="infra-state infra-state-unknown">нет данных</span>
                                         {% else %}
