@@ -332,6 +332,20 @@ def _load_tone(value):
     return "normal"
 
 
+def _group_backups(backups):
+    """Группирует проверки копий по узлу, сохраняя порядок «сначала то,
+    что требует внимания» — он задан на стороне Dominex."""
+    groups = []
+    index = {}
+    for check in backups:
+        host = check.get("host") or "—"
+        if host not in index:
+            index[host] = {"host": host, "checks": []}
+            groups.append(index[host])
+        index[host]["checks"].append(check)
+    return groups
+
+
 def _decorate_logins(logins):
     """Переводит столбики спарклайна в проценты от максимума.
 
@@ -403,6 +417,7 @@ def infrastructure(request):
             "staff": (summary or {}).get("staff") or [],
             "domains": (summary or {}).get("domains") or [],
             "backups": (summary or {}).get("backups") or [],
+            "backup_groups": _group_backups((summary or {}).get("backups") or []),
             "auth_points": (summary or {}).get("auth_points") or [],
             "logins": _decorate_logins((summary or {}).get("logins") or {}),
         },

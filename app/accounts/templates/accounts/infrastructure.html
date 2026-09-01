@@ -11,8 +11,6 @@
 
 {% block content %}
 
-{% include "components/app_header.html" %}
-
 <div class="infra-shell">
 
 {% comment %}
@@ -21,6 +19,16 @@
 кнопкой «назад» в браузере. Якоря ведут по самой странице.
 {% endcomment %}
 <nav class="infra-nav">
+    {% comment %}
+    Марка — строкой, а не баннером. Прежняя общая шапка занимала больше
+    половины первого экрана: до таблицы оборудования приходилось
+    прокручивать, не увидев ни одного показателя.
+    {% endcomment %}
+    <a class="infra-brand" href="{% url 'accounts:account_home' %}">
+        <img src="{% static 'ssod_auth/img/LogoSSOD_plus.png' %}" alt="ССОД">
+        <span>Личный кабинет</span>
+    </a>
+
     <div class="infra-nav-group">
         <div class="infra-nav-label">Личный кабинет</div>
         <a href="{% url 'accounts:account_home' %}">Обзор</a>
@@ -38,6 +46,29 @@
         <a href="#infra-logins">Попытки входа</a>
         <a href="#infra-problems">Проблемы</a>
         <a href="#infra-sources">Источники данных</a>
+    </div>
+
+    {% comment %}
+    Кто вошёл — внизу колонки. Наверху это отнимало место у данных, ради
+    которых страницу и открывают, а сведения о себе руководителю нужны
+    редко и мельком.
+    {% endcomment %}
+    <div class="infra-whoami">
+        <div class="infra-whoami-avatar">
+            {% if request.user.avatar %}
+                <img src="{{ request.user.avatar.url }}" alt="">
+            {% else %}
+                {{ request.user.first_name|first|default:request.user.username|first }}
+            {% endif %}
+        </div>
+        <div class="infra-whoami-text">
+            <div class="infra-whoami-name">
+                {{ request.user.full_name_ru|default:request.user.username }}
+            </div>
+            <div class="infra-whoami-role">
+                {{ request.user.position.name|default:"—" }} · класс {{ request.user.access_class }}
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -231,59 +262,71 @@
                 <span class="infra-section-note">проверки из Zabbix</span>
             </div>
 
-            {% if backups %}
+            {% if backup_groups %}
                 <div class="infra-table-scroll">
                     <table class="infra-table">
                         <thead>
                             <tr>
-                                <th>Объект</th>
+                                <th>Что копируется</th>
                                 <th>Проверка</th>
                                 <th>Результат</th>
                                 <th>Последняя копия</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            {% for check in backups %}
-                                <tr>
-                                    <td><span class="infra-name">{{ check.host|default:"—" }}</span></td>
-                                    <td class="infra-sub">{{ check.name }}</td>
-                                    <td>
-                                        {% if check.state == "ok" %}
-                                            <span class="infra-state infra-state-ok">в норме</span>
-                                        {% elif check.state == "stale" %}
-                                            <span class="infra-state infra-state-warn">копия устарела</span>
-                                        {% elif check.state == "problem" %}
-                                            <span class="infra-state infra-state-bad">не прошло</span>
-                                        {% elif check.state == "broken" %}
-                                            <span class="infra-state infra-state-bad">проверка не работает</span>
-                                        {% elif check.state == "never" %}
-                                            <span class="infra-state infra-state-warn">успешных прогонов не было</span>
-                                        {% elif check.state == "unknown" %}
-                                            <span class="infra-state infra-state-unknown">нет данных</span>
-                                        {% else %}
-                                            <span class="mono">{{ check.value }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="infra-sub mono">
-                                        {% comment %}
-                                        Для проверок-счётчиков возраста показываем возраст САМОЙ КОПИИ,
-                                        а не время последнего опроса: руководителю важно «когда сняли
-                                        копию», а не «когда мониторинг про неё спросил».
-                                        {% endcomment %}
-                                        {% if check.kind == "возраст" and check.value %}
-                                            {{ check.value }}
-                                        {% else %}
-                                            опрошено {{ check.age|default:"—" }} назад
-                                        {% endif %}
+                        {% comment %}
+                        Группа = один узел. Имя сервера стоит один раз
+                        заголовком: раньше оно повторялось в каждой строке
+                        и забивало собой то, чем строки различаются —
+                        читалось как три одинаковые записи вместо трёх
+                        разных проверок.
+                        {% endcomment %}
+                        {% for group in backup_groups %}
+                            <tbody class="infra-group">
+                                <tr class="infra-group-head">
+                                    <td colspan="4">
+                                        <span class="infra-name">{{ group.host }}</span>
+                                        <span class="infra-sub">
+                                            {{ group.checks|length }} проверк{{ group.checks|length|pluralize:"а,и," }}
+                                        </span>
                                     </td>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
+                                {% for check in group.checks %}
+                                    <tr>
+                                        <td><span class="mono">{{ check.subject }}</span></td>
+                                        <td class="infra-sub">{{ check.name }}</td>
+                                        <td>
+                                            {% if check.state == "ok" %}
+                                                <span class="infra-state infra-state-ok">в норме</span>
+                                            {% elif check.state == "stale" %}
+                                                <span class="infra-state infra-state-warn">копия устарела</span>
+                                            {% elif check.state == "problem" %}
+                                                <span class="infra-state infra-state-bad">не прошло</span>
+                                            {% elif check.state == "broken" %}
+                                                <span class="infra-state infra-state-bad">проверка не работает</span>
+                                            {% elif check.state == "never" %}
+                                                <span class="infra-state infra-state-warn">успешных прогонов не было</span>
+                                            {% elif check.state == "unknown" %}
+                                                <span class="infra-state infra-state-unknown">нет данных</span>
+                                            {% else %}
+                                                <span class="mono">{{ check.value }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="infra-sub mono">
+                                            {% if check.kind == "возраст" and check.value %}
+                                                {{ check.value }}
+                                            {% else %}
+                                                опрошено {{ check.age|default:"—" }} назад
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        {% endfor %}
                     </table>
                 </div>
                 <div class="infra-panel-foot">
-                    Это точечные проверки, а не полный журнал копий: время,
-                    размер и глубина хранения в мониторинг пока не передаются.
+                    Это точечные проверки, а не полный журнал копий: размер и
+                    глубина хранения в мониторинг пока не передаются.
                 </div>
             {% else %}
                 <div class="infra-empty">
