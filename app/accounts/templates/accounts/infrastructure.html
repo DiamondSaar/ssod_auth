@@ -239,7 +239,7 @@
                                 <th>Объект</th>
                                 <th>Проверка</th>
                                 <th>Результат</th>
-                                <th>Проверено</th>
+                                <th>Последняя копия</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -249,20 +249,33 @@
                                     <td class="infra-sub">{{ check.name }}</td>
                                     <td>
                                         {% if check.state == "ok" %}
-                                            <span class="infra-state infra-state-ok">копия есть</span>
+                                            <span class="infra-state infra-state-ok">в норме</span>
+                                        {% elif check.state == "stale" %}
+                                            <span class="infra-state infra-state-warn">копия устарела</span>
                                         {% elif check.state == "problem" %}
-                                            <span class="infra-state infra-state-bad">копии нет</span>
+                                            <span class="infra-state infra-state-bad">не прошло</span>
                                         {% elif check.state == "broken" %}
                                             <span class="infra-state infra-state-bad">проверка не работает</span>
                                         {% elif check.state == "never" %}
-                                            <span class="infra-state infra-state-warn">ни разу не выполнялась</span>
+                                            <span class="infra-state infra-state-warn">успешных прогонов не было</span>
                                         {% elif check.state == "unknown" %}
                                             <span class="infra-state infra-state-unknown">нет данных</span>
                                         {% else %}
                                             <span class="mono">{{ check.value }}</span>
                                         {% endif %}
                                     </td>
-                                    <td class="infra-sub mono">{{ check.age|default:"—" }}</td>
+                                    <td class="infra-sub mono">
+                                        {% comment %}
+                                        Для проверок-счётчиков возраста показываем возраст САМОЙ КОПИИ,
+                                        а не время последнего опроса: руководителю важно «когда сняли
+                                        копию», а не «когда мониторинг про неё спросил».
+                                        {% endcomment %}
+                                        {% if check.kind == "возраст" and check.value %}
+                                            {{ check.value }}
+                                        {% else %}
+                                            опрошено {{ check.age|default:"—" }} назад
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
