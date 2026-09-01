@@ -161,7 +161,9 @@
                     {{ counters.backup_checks|default:"0" }}
                     {% if counters.backup_problems %}
                         <span class="infra-fact-note infra-text-bad">
-                            {{ counters.backup_problems }} не прошли
+                            {# «не прошли» неверно для устаревшей копии: прогон мог пройти,
+                               просто давно. Общая формулировка честнее. #}
+                            {{ counters.backup_problems }} требуют внимания
                         </span>
                     {% elif counters.backup_unchecked %}
                         <span class="infra-fact-note infra-text-bad">
