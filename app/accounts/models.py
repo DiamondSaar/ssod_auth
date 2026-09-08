@@ -416,6 +416,24 @@ class RepositoryItem(TimeStampedModel):
         help_text="Прямая ссылка на файл (например, https://biographia.ssod.pro/builds/latest.apk).",
     )
 
+    class Platform(models.TextChoices):
+        ANDROID = "android", "Android"
+        WINDOWS = "windows", "Windows"
+        IOS = "ios", "iOS"
+        OTHER = "other", "Другое"
+
+    platform = models.CharField(
+        max_length=16,
+        choices=Platform.choices,
+        default=Platform.ANDROID,
+        verbose_name="Платформа",
+        help_text=(
+            "Определяет, как показывать карточку: для мобильных — QR-код "
+            "и подсказка «отсканируйте телефоном», для настольных — "
+            "предупреждение, что файл нужно скачивать на компьютер."
+        ),
+    )
+
     version_label = models.CharField(
         max_length=100,
         blank=True,

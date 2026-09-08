@@ -31,25 +31,36 @@
             {% endif %}
         </div>
 
-        <div class="repository-item-qr-box">
-            <img src="{{ qr_data_uri }}" alt="QR-код на скачивание" class="repository-item-qr">
-        </div>
+        {% if item.platform == "windows" %}
+            <p class="repository-item-hint">
+                Настольное приложение для Windows — скачивайте на компьютер.
+                На телефоне этот файл не установится.
+            </p>
+        {% elif item.platform == "ios" %}
+            <p class="repository-item-hint">
+                Приложение для iPhone — установка через App Store или TestFlight
+                по ссылке ниже.
+            </p>
+        {% else %}
+            <div class="repository-item-qr-box">
+                <img src="{{ qr_data_uri }}" alt="QR-код на скачивание" class="repository-item-qr">
+            </div>
 
-        <p class="repository-item-hint">
-            Отсканируйте камерой телефона или откройте ссылку ниже прямо в браузере на телефоне.
-        </p>
+            <p class="repository-item-hint">
+                Отсканируйте камерой телефона или откройте ссылку ниже прямо в браузере на телефоне.
+            </p>
+        {% endif %}
 
         <a class="button primary repository-item-download" href="{{ item.download_url }}">
             Скачать
         </a>
 
-        {#
+        {% comment %}
             Прямая ссылка на файл текстом, чтобы её можно было скопировать и
             переслать. Файл раздаётся статикой на стороне самого продукта
             (см. RepositoryItem.download_url) и входа в ссод аус не требует -
-            значит, ссылку можно дать человеку без учётной записи, например
-            чтобы проверить сборку на чужом телефоне.
-        #}
+            значит, ссылку можно дать человеку без учётной записи.
+        {% endcomment %}
         <div class="repository-item-direct">
             <div class="repository-item-direct-label">
                 Прямая ссылка — открывается без входа в ССОД:
