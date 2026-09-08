@@ -116,7 +116,16 @@ async function loginWithPasskey() {
 
         const result = await completeResponse.json();
 
-        window.location.href = result.redirect_url || "/account/";
+        // Вход по passkey тоже должен уважать ?next= - иначе переход в
+        // продукт экосистемы заканчивается в личном кабинете. Берём только
+        // внутренние пути (начинается с одного "/") - чужой абсолютный URL
+        // здесь был бы открытым редиректом.
+        const requestedNext = new URLSearchParams(window.location.search).get("next");
+        const safeNext =
+            requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//")
+                ? requestedNext
+                : null;
+        window.location.href = safeNext || result.redirect_url || "/account/";
 
     } catch (error) {
         console.error(error);

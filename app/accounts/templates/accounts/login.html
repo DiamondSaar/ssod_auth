@@ -28,6 +28,10 @@
 
     <form method="post" class="login-form">
         {% csrf_token %}
+        {# Куда вернуть человека после входа. Без этого поля Django уводит
+           всех в личный кабинет, и переход в продукт экосистемы (вход в
+           Dominex Vox идёт через /account/sso/authorize/) обрывается на ЛК. #}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
         <div class="form-field">
             <label for="{{ form.username.id_for_label }}">
