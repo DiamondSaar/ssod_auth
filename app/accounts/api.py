@@ -20,6 +20,8 @@ from accounts.models import (
     UserProductAccess,
     WebAuthnCredential,
 )
+from accounts.services.dominex_client import fetch_user_projection
+from accounts.services.dominex_sync import apply_projection
 
 # Короткоживущий service-токен для межсервисных (машина-машина) вызовов -
 # тот же принцип, что и SSO_TICKET_LIFETIME_SECONDS в views.py::sso_authorize
@@ -226,6 +228,60 @@ def admin_update_product(request):
             "changed": list(changed.keys()),
         }
     )
+
+
+@csrf_exempt
+@require_POST
+def dominex_projection_changed(request):
+    """
+    Push-уведомление от Dominex: у пользователя изменилось что-то из
+    проекции (организация/должность/класс доступа/продукты - см.
+    dominex/app/api/identity.py::user_projection). Раньше это подтягивалось
+    ТОЛЬКО при следующем логине через DominexCredentialBackend - между
+    правкой в Dominex и повторным входом пользователь видел устаревшие
+    данные (обнаружено 2026-09-09 на организации Никиты Сергеева).
+
+    Тот же секрет и то же направление вызова, что и admin_update_product
+    выше (Dominex -> ssod_auth, X-Dominex-Admin-Key) - не заводим для этого
+    отдельный ключ, это тот же самый "Dominex сам сообщает о своих
+    изменениях" канал, просто другое событие.
+
+    Best-effort в обе стороны, как и штатный fetch_user_projection(): нет
+    локальной учётки (ещё не логинился) - нечего обновлять, первый логин
+    и так подтянет актуальное; Dominex недоступен прямо сейчас - тоже не
+    беда, следующий логин досинхронизирует.
+    """
+    provided = request.headers.get("X-Dominex-Admin-Key", "")
+    expected = settings.DOMINEX_ADMIN_API_KEY
+
+    if not expected or not hmac.compare_digest(provided, expected):
+        return JsonResponse({"error": "unauthorized"}, status=401)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    username = (payload.get("username") or "").strip()
+    if not username:
+        return JsonResponse({"error": "username_required"}, status=400)
+
+    user = CustomUser.objects.filter(username=username).first()
+    if user is None:
+        return JsonResponse({"ok": True, "applied": False, "reason": "not_found_locally"})
+
+    projection = fetch_user_projection(username)
+    if projection is None:
+        return JsonResponse({"ok": False, "applied": False, "reason": "dominex_unreachable"}, status=502)
+
+    summary = apply_projection(user, projection)
+    AuthEvent.objects.create(
+        user=user,
+        event_type=AuthEvent.EventType.PROFILE_SYNCED,
+        details=summary,
+    )
+
+    return JsonResponse({"ok": True, "applied": True, "summary": summary})
 
 
 def _require_biographia_key(request):

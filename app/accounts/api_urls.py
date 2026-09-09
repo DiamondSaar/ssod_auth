@@ -9,6 +9,7 @@ urlpatterns = [
     path("keys/verify/", api.verify_access_key, name="verify_access_key"),
     path("service-token/", api.issue_service_token, name="issue_service_token"),
     path("products/update/", api.admin_update_product, name="admin_update_product"),
+    path("users/projection-changed/", api.dominex_projection_changed, name="dominex_projection_changed"),
     path("personal-key/", api.store_personal_key_material, name="store_personal_key_material"),
     path("personal-key/<str:username>/", api.fetch_personal_key_material, name="fetch_personal_key_material"),
     path("webauthn-credentials/", api.store_webauthn_credential, name="store_webauthn_credential"),

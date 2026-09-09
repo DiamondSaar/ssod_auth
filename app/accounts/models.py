@@ -1203,6 +1203,7 @@ class AuthEvent(TimeStampedModel):
         ACCESS_DENIED = "access_denied", "Доступ запрещен"
         ACCESS_GRANTED = "access_granted", "Доступ разрешен"
         PRODUCT_CONFIG_SYNCED = "product_config_synced", "Конфигурация продукта синхронизирована из Dominex"
+        PROFILE_SYNCED = "profile_synced", "Профиль пользователя синхронизирован из Dominex (push)"
         PERSONAL_KEY_MATERIAL_UPDATED = "personal_key_material_updated", "Материал личного ключа обновлён (Biographia)"
         SERVICE_TOKEN_ISSUED = "service_token_issued", "Service-токен выдан"
         SERVICE_TOKEN_DENIED = "service_token_denied", "Service-токен отклонён"
