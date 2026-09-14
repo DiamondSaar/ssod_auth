@@ -51,10 +51,18 @@ def apply_projection(user, projection):
     user.save()
 
     for product_data in projection.get("products", []):
-        product, _ = Product.objects.get_or_create(
+        url = product_data.get("url") or ""
+        product, created = Product.objects.get_or_create(
             code=product_data["code"],
-            defaults={"name": product_data["name"]},
+            defaults={"name": product_data["name"], "product_url": url},
         )
+        # A product first seen through a grant used to be created without an
+        # address, and its card in "Мои продукты" led nowhere. Fill only an
+        # empty one: a local address may differ on purpose (the admin bridge
+        # and manual edits own it), so a set one is never overwritten.
+        if not created and url and not product.product_url:
+            product.product_url = url
+            product.save(update_fields=["product_url", "updated_at"])
         role, _ = ProductRole.objects.get_or_create(
             product=product,
             code=DOMINEX_SYNC_ROLE_CODE,
