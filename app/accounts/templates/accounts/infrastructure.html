@@ -161,8 +161,10 @@
                     {{ counters.backup_checks|default:"0" }}
                     {% if counters.backup_problems %}
                         <span class="infra-fact-note infra-text-bad">
-                            {# «не прошли» неверно для устаревшей копии: прогон мог пройти,
-                               просто давно. Общая формулировка честнее. #}
+                            {% comment %}
+                                «не прошли» неверно для устаревшей копии: прогон мог пройти,
+                                просто давно. Общая формулировка честнее.
+                            {% endcomment %}
                             {{ counters.backup_problems }} требуют внимания
                         </span>
                     {% elif counters.backup_unchecked %}
