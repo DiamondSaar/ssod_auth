@@ -4,7 +4,7 @@ from pathlib import Path
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
 
-from accounts.models import Product, UserProductAccess
+from accounts.models import Organization, Product, UserProductAccess
 from accounts.services.dominex_sync import apply_projection
 
 
@@ -94,3 +94,56 @@ class ApplyProjectionProductUrlTests(TestCase):
         product = Product.objects.get(code="vox")
         self.assertEqual(product.product_url, "")
         self.assertTrue(UserProductAccess.objects.filter(user=self.user, product=product).exists())
+
+
+class OrganizationCabinetTests(TestCase):
+    """
+    Кабинет юрлица — отдельная зона. Обезличенная учётная запись
+    организации не должна попадать в личные разделы, а обычный
+    пользователь — в кабинет юрлица.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.organization = Organization.objects.create(name="АсКомпонент")
+
+        self.org_user = User.objects.create_user(username="ascom-lk", password="x")
+        self.org_user.organization = self.organization
+        self.org_user.is_organization_account = True
+        self.org_user.save()
+
+        self.person = User.objects.create_user(username="ivanov", password="x")
+
+    def test_org_account_is_sent_from_personal_cabinet_to_its_own(self):
+        self.client.force_login(self.org_user)
+
+        response = self.client.get("/account/")
+
+        self.assertRedirects(response, "/account/org/", fetch_redirect_response=False)
+
+    def test_org_account_is_sent_away_from_personal_sections(self):
+        self.client.force_login(self.org_user)
+
+        for path in ("/account/products/", "/account/security/", "/account/repository/"):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertRedirects(response, "/account/org/", fetch_redirect_response=False)
+
+    def test_org_pages_open_for_org_account(self):
+        self.client.force_login(self.org_user)
+
+        for path in ("/account/org/documents/", "/account/org/contact/"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 200)
+
+    def test_org_cabinet_hidden_from_personal_account(self):
+        self.client.force_login(self.person)
+
+        for path in ("/account/org/", "/account/org/documents/", "/account/org/contact/"):
+            with self.subTest(path=path):
+                self.assertEqual(self.client.get(path).status_code, 404)
+
+    def test_personal_account_is_not_redirected(self):
+        self.client.force_login(self.person)
+
+        self.assertEqual(self.client.get("/account/products/").status_code, 200)

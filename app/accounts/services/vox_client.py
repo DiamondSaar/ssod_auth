@@ -1,13 +1,15 @@
 """
-Отправка сообщения из кабинета юрлица в мессенджер Dominex Vox.
+Отправка обращения из кабинета юрлица в мессенджер Dominex Vox.
 
-Канал поддержки принимает сообщения через входящую интеграцию Vox:
-её адрес лежит в настройке VOX_SUPPORT_WEBHOOK_URL и больше ничего
-не требует — учётная запись Vox клиенту не нужна.
+Пишем служебной учётной записью прямо в канал поддержки по его
+идентификатору (chat.postMessage). Входящая интеграция («вебхук») для
+этого не годится: Vox не принимает в ней канал с русским названием —
+«поддержка» он не находит, а идентификатор комнаты в этом поле
+не принимает вовсе.
 
 Функция никогда не бросает исключение: связь с клиентом не должна
 падать из-за недоступного мессенджера. О неудаче сообщаем возвратом
-False, письмо остаётся запасным каналом.
+False — письмо остаётся запасным каналом.
 """
 
 import logging
@@ -28,10 +30,13 @@ def send_support_message(organization_name, author, text, contact=""):
     author — кто написал (имя из формы);
     contact — как ответить (почта или телефон), может быть пустым.
     """
-    webhook_url = getattr(settings, "VOX_SUPPORT_WEBHOOK_URL", "")
+    base_url = (getattr(settings, "VOX_API_URL", "") or "").rstrip("/")
+    token = getattr(settings, "VOX_BOT_TOKEN", "")
+    user_id = getattr(settings, "VOX_BOT_USER_ID", "")
+    room_id = getattr(settings, "VOX_SUPPORT_ROOM_ID", "")
 
-    if not webhook_url:
-        logger.warning("VOX_SUPPORT_WEBHOOK_URL не задан — сообщение в Vox не отправлено")
+    if not (base_url and token and user_id and room_id):
+        logger.warning("Vox не настроен — сообщение из кабинета юрлица не отправлено")
         return False
 
     header = ["*Обращение из кабинета юрлица: {}*".format(organization_name)]
@@ -41,13 +46,26 @@ def send_support_message(organization_name, author, text, contact=""):
     if contact:
         header.append("Обратная связь: {}".format(contact))
 
-    payload = {"text": "\n".join(header) + "\n\n" + text.strip()}
+    payload = {
+        "roomId": room_id,
+        "text": "\n".join(header) + "\n\n" + text.strip(),
+    }
 
     try:
-        response = requests.post(webhook_url, json=payload, timeout=TIMEOUT_SECONDS)
+        response = requests.post(
+            "{}/api/v1/chat.postMessage".format(base_url),
+            json=payload,
+            headers={"X-Auth-Token": token, "X-User-Id": user_id},
+            timeout=TIMEOUT_SECONDS,
+        )
         response.raise_for_status()
+        result = response.json()
     except Exception:
         logger.warning("Не удалось отправить сообщение в Vox", exc_info=True)
+        return False
+
+    if not result.get("success"):
+        logger.warning("Vox отклонил сообщение: %s", result.get("error"))
         return False
 
     return True

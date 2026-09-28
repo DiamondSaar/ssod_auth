@@ -371,9 +371,12 @@ BIOGRAPHIA_KEY_API_KEY = env("BIOGRAPHIA_KEY_API_KEY", default="dev-biographia-k
 # Кабинет юридического лица (/account/org/)
 # ---------------------------------------------------------------------
 
-# Входящая интеграция Dominex Vox: обращения из кабинета падают в канал
-# поддержки. Пусто — форма продолжает работать, но уходит только письмом.
-VOX_SUPPORT_WEBHOOK_URL = env("VOX_SUPPORT_WEBHOOK_URL", default="")
+# Обращения из кабинета уходят служебной учётной записью в канал поддержки
+# Dominex Vox. Не задано — форма продолжает работать, но только письмом.
+VOX_API_URL = env("VOX_API_URL", default="")
+VOX_BOT_TOKEN = env("VOX_BOT_TOKEN", default="")
+VOX_BOT_USER_ID = env("VOX_BOT_USER_ID", default="")
+VOX_SUPPORT_ROOM_ID = env("VOX_SUPPORT_ROOM_ID", default="")
 
 # Куда уходит письмо с обращением из кабинета юрлица.
 ORG_SUPPORT_EMAIL = env("ORG_SUPPORT_EMAIL", default="info@ssod.pro")
