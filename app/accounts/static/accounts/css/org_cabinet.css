@@ -124,8 +124,9 @@
 }
 
 .org-brand img {
-    max-width: 190px;
-    max-height: 60px;
+    max-width: 380px;
+    max-height: 120px;
+    width: 100%;
 }
 
 .org-brand-text {
