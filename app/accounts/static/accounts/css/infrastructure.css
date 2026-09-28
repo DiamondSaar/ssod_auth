@@ -916,3 +916,41 @@
 .infra-dot-bad {
     background: var(--infra-red);
 }
+
+/* Подробности задачи копирования: раскрывается по щелчку. */
+
+.infra-backup-detail td {
+    padding-top: 0;
+    border-top: none;
+}
+
+.infra-backup-detail summary {
+    cursor: pointer;
+    font-size: 12.5px;
+    color: var(--infra-muted);
+}
+
+.infra-backup-detail summary:hover {
+    color: var(--infra-text);
+}
+
+.infra-details-list {
+    margin: 8px 0 4px;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 4px;
+}
+
+.infra-details-list li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 12.5px;
+}
+
+.infra-details-name {
+    min-width: 150px;
+    color: var(--infra-text);
+}

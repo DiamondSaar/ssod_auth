@@ -335,14 +335,48 @@
                                             {% endif %}
                                         </td>
                                     </tr>
+                                    {% comment %}
+                                    Подробности задачи: сколько копий лежит,
+                                    сколько занято и что именно копируется.
+                                    Раскрывается по щелчку, а не висит
+                                    развёрнутым: в таблице это десятки строк.
+                                    {% endcomment %}
+                                    {% if check.details %}
+                                        <tr class="infra-backup-detail">
+                                            <td colspan="4">
+                                                <details>
+                                                    <summary>
+                                                        хранится {{ check.copies }}
+                                                        {% if check.volume_human %} · {{ check.volume_human }}{% endif %}
+                                                        {% if check.details.databases %} · баз: {{ check.details.databases|length }}{% endif %}
+                                                    </summary>
+                                                    <ul class="infra-details-list">
+                                                        {% for db in check.details.databases %}
+                                                            <li>
+                                                                <span class="infra-details-name">{{ db.name }}</span>
+                                                                <span class="infra-sub mono">{{ db.count }} копи{{ db.count|pluralize:"я,и,й" }} · {{ db.size|filesizeformat }} · последняя {{ db.date }}</span>
+                                                            </li>
+                                                        {% endfor %}
+                                                        {% for archive in check.details.archives %}
+                                                            <li>
+                                                                <span class="infra-details-name mono">{{ archive.date }}</span>
+                                                                <span class="infra-sub mono">{{ archive.size|filesizeformat }} · {{ archive.name }}</span>
+                                                            </li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </details>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
                                 {% endfor %}
                             </tbody>
                         {% endfor %}
                     </table>
                 </div>
                 <div class="infra-panel-foot">
-                    Это точечные проверки, а не полный журнал копий: размер и
-                    глубина хранения в мониторинг пока не передаются.
+                    Это проверки из мониторинга, а не журнал самой системы
+                    копирования: где состав передаётся — он раскрывается
+                    в строке, остальные проверки показывают только результат.
                 </div>
             {% else %}
                 <div class="infra-empty">
