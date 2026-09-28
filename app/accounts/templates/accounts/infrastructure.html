@@ -441,6 +441,28 @@
                 <div class="infra-section-head">
                     <h2>Сеть и каналы связи</h2>
                 </div>
+                {% comment %}
+                Состояние каналов идёт первым: на вопрос «интернет есть?»
+                отвечает оно, а записи об операторе — справочные.
+                {% endcomment %}
+                {% if links %}
+                    <div class="infra-rows">
+                        {% for link in links %}
+                            <div class="infra-row infra-link-row">
+                                <span class="infra-row-main">
+                                    {{ link.name }}
+                                    <span class="infra-sub">{{ link.device }}</span>
+                                </span>
+                                <span class="infra-sub">
+                                    {% if link.state == "up" %}линия в норме{% else %}нет связи{% endif %}
+                                </span>
+                                <span class="infra-dot infra-dot-{% if link.state == 'up' %}ok{% else %}bad{% endif %}"
+                                      title="{% if link.state == 'up' %}канал поднят{% else %}канал не поднят{% endif %}"></span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
                 {% if network %}
                     <div class="infra-rows">
                         {% for channel in network %}
@@ -460,7 +482,7 @@
                             </div>
                         {% endfor %}
                     </div>
-                {% else %}
+                {% elif not links %}
                     <div class="infra-empty">
                         Каналы связи не заведены в карточках оборудования.
                         Их заполняет инженер ССОД в карточке маршрутизатора.
