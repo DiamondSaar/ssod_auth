@@ -514,6 +514,7 @@ def org_documents(request):
         request,
         "accounts/org_documents.html",
         {
+            "organization": organization,
             "organization_name": organization.name if organization else "",
         },
     )
@@ -593,6 +594,7 @@ def org_contact(request):
         "accounts/org_contact.html",
         {
             "form": form,
+            "organization": organization,
             "organization_name": organization_name,
             "support_email": settings.ORG_SUPPORT_EMAIL,
         },

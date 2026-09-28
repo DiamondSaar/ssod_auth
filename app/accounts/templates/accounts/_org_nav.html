@@ -11,7 +11,7 @@ show_anchors — показывать ли якоря страницы мони�
         <img src="{% static 'ssod_auth/img/LogoSSOD_plus.png' %}" alt="ССОД">
         <span class="org-brand-text">
             <span class="org-brand-label">Кабинет организации</span>
-            <span class="org-brand-name">{{ organization.short_name|default:organization.name|default:request.user.organization.name }}</span>
+            <span class="org-brand-name">{% firstof organization.short_name organization.name request.user.organization.name %}</span>
         </span>
     </a>
 
