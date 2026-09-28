@@ -7,6 +7,9 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'accounts/css/infrastructure.css' %}">
+    {% if request.user.is_organization_account %}
+        <link rel="stylesheet" href="{% static 'accounts/css/org_cabinet.css' %}">
+    {% endif %}
 {% endblock %}
 
 {% block content %}

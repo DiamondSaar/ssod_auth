@@ -111,3 +111,65 @@
     opacity: 0.7;
     font-size: 14px;
 }
+
+/* Шапка колонки: марка ССОД крупно, под ней — чей это кабинет.
+   На общей странице мониторинга марка мелкая, её видит свой же сотрудник;
+   клиенту важно видеть, в чьём кабинете он находится. */
+
+.org-brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 16px;
+}
+
+.org-brand img {
+    max-width: 190px;
+    max-height: 60px;
+}
+
+.org-brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.org-brand-label {
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--infra-muted-dim);
+}
+
+.org-brand-name {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #e8eef7;
+    text-transform: none;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Точки авторизации: длинный способ входа («SSH / HTTP (RCI) · 50022 (SSH),
+   80/443 (веб)») не помещался в узкую правую колонку и наезжал на соседние
+   строки — часть данных становилась нечитаемой. Раскладываем сверху вниз,
+   длинные значения переносим. */
+
+.infra-authpoint {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.infra-authpoint-main {
+    width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.infra-authpoint .infra-proto {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+}
