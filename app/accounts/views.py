@@ -1,5 +1,6 @@
 import base64
 import io
+import logging
 import uuid as uuid_lib
 import json
 import os
@@ -15,6 +16,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from .models import (
@@ -31,12 +33,16 @@ from .models import (
 )
 from .forms import (
     FirstPasswordChangeForm,
+    OrgContactForm,
     PortalDeployForm,
     ServiceClientCreateForm,
     ServiceClientGrantCreateForm,
     SSODAccessKeyCreateForm,
 )
 from accounts.services.dominex_client import fetch_infrastructure_summary, fetch_oracle_status
+from accounts.services.vox_client import send_support_message
+
+logger = logging.getLogger(__name__)
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
@@ -385,7 +391,7 @@ def infrastructure(request):
     сообщает, что источник не отвечает.
     """
 
-    if not request.user.can_view_infrastructure:
+    if not (request.user.can_view_infrastructure or request.user.is_organization_account):
         raise Http404
 
     summary = fetch_infrastructure_summary(request.user.username)
@@ -465,6 +471,130 @@ def repository_item_detail(request, item_id):
         {
             "item": item,
             "qr_data_uri": qr_data_uri,
+        },
+    )
+
+
+def _require_org_account(request):
+    """
+    Кабинет юрлица открыт только обезличенной учётной записи организации.
+    Для всех остальных его просто не существует — отсюда 404, а не отказ.
+    """
+    if not request.user.is_organization_account:
+        raise Http404
+
+
+@login_required
+def org_home(request):
+    """
+    Главная кабинета юрлица — сразу мониторинг и состояние инфраструктуры.
+    Личных разделов здесь нет, поэтому промежуточной страницы с плитками
+    тоже нет: человек входит и видит то, ради чего пришёл.
+
+    Страница та же, что у руководителя-физлица (accounts/infrastructure.html):
+    данные одни и те же, различается только колонка переходов — она
+    переключается в шаблоне по признаку учётной записи.
+    """
+    _require_org_account(request)
+
+    return infrastructure(request)
+
+
+@login_required
+def org_documents(request):
+    """
+    Документы организации — договоры, счета, акты.
+    Раздел в подготовке: наполнение и правила доступа обсуждаются.
+    """
+    _require_org_account(request)
+
+    organization = request.user.organization
+
+    return render(
+        request,
+        "accounts/org_documents.html",
+        {
+            "organization_name": organization.name if organization else "",
+        },
+    )
+
+
+@login_required
+def org_contact(request):
+    """
+    Связь с ССОД из кабинета юрлица.
+
+    Обращение уходит двумя путями сразу: письмом на почту ССОД и
+    сообщением в канал поддержки Dominex Vox. Мессенджер быстрее, но
+    письмо остаётся, даже если мессенджер недоступен, — поэтому успехом
+    считается доставка хотя бы одним из них.
+    """
+    _require_org_account(request)
+
+    organization = request.user.organization
+    organization_name = organization.name if organization else request.user.username
+
+    if request.method == "POST":
+        form = OrgContactForm(request.POST)
+
+        if form.is_valid():
+            author = form.cleaned_data["author"]
+            contact = form.cleaned_data["contact"]
+            text = form.cleaned_data["message"]
+
+            subject = "Обращение из кабинета: {}".format(organization_name)
+            body = "\n".join([
+                "Организация: {}".format(organization_name),
+                "Учётная запись: {}".format(request.user.username),
+                "Автор: {}".format(author),
+                "Обратная связь: {}".format(contact or "не указана"),
+                "",
+                text,
+                "",
+            ])
+
+            mail_sent = False
+            try:
+                send_mail(
+                    subject=subject,
+                    message=body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.ORG_SUPPORT_EMAIL],
+                    fail_silently=False,
+                )
+                mail_sent = True
+            except Exception:
+                logger.warning("Письмо с обращением не ушло", exc_info=True)
+
+            vox_sent = send_support_message(
+                organization_name=organization_name,
+                author=author,
+                text=text,
+                contact=contact,
+            )
+
+            if mail_sent or vox_sent:
+                messages.success(
+                    request,
+                    "Обращение отправлено. Мы свяжемся с вами в ближайшее время.",
+                )
+                return redirect("accounts:org_contact")
+
+            messages.error(
+                request,
+                "Отправить не удалось: и почта, и мессенджер сейчас недоступны. "
+                "Позвоните нам по телефону +7 995 505-01-86.",
+            )
+    else:
+        form = OrgContactForm()
+
+    return render(
+        request,
+        "accounts/org_contact.html",
+        {
+            "form": form,
+            "organization_name": organization_name,
+            "support_email": settings.ORG_SUPPORT_EMAIL,
         },
     )
 

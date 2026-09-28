@@ -1,0 +1,54 @@
+{% load static %}
+{% comment %}
+Колонка переходов кабинета юрлица. Личных разделов здесь нет: под
+обезличенной учётной записью организации их не существует.
+Ожидает в контексте: organization (сводка из Dominex или локальная),
+show_anchors — показывать ли якоря страницы мониторинга.
+{% endcomment %}
+<nav class="infra-nav">
+
+    <a class="infra-brand" href="{% url 'accounts:org_home' %}">
+        <img src="{% static 'ssod_auth/img/LogoSSOD_plus.png' %}" alt="ССОД">
+        <span>Кабинет организации</span>
+    </a>
+
+    <div class="infra-nav-group">
+        <div class="infra-nav-label">Разделы</div>
+        <a href="{% url 'accounts:org_home' %}">Мониторинг и состояние</a>
+        <a href="{% url 'accounts:org_documents' %}">Документы</a>
+        <a href="{% url 'accounts:org_contact' %}">Связь с ССОД</a>
+    </div>
+
+    {% if show_anchors %}
+    <div class="infra-nav-group">
+        <div class="infra-nav-label">На этой странице</div>
+        <a href="#infra-equipment" class="is-current">Оборудование</a>
+        <a href="#infra-backups">Резервные копии</a>
+        <a href="#infra-staff">Сотрудники</a>
+        <a href="#infra-net-domains">Сеть и домены</a>
+        <a href="#infra-auth-points">Точки авторизации</a>
+        <a href="#infra-logins">Попытки входа</a>
+        <a href="#infra-problems">Проблемы</a>
+        <a href="#infra-sources">Источники данных</a>
+    </div>
+    {% endif %}
+
+    <div class="infra-whoami">
+        <div class="infra-whoami-avatar">
+            {{ request.user.organization.name|first|default:"О" }}
+        </div>
+        <div class="infra-whoami-text">
+            <div class="infra-whoami-name">
+                {{ request.user.organization.name|default:request.user.username }}
+            </div>
+            <div class="infra-whoami-role">
+                Кабинет юридического лица
+            </div>
+        </div>
+    </div>
+
+    <div class="org-nav-exit">
+        <a href="{% url 'accounts:logout' %}">Выйти</a>
+    </div>
+
+</nav>

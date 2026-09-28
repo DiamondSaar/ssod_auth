@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Связь с ССОД — кабинет организации{% endblock %}
+
+{% block main_class %}infra-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/infrastructure.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/org_cabinet.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="infra-shell">
+
+    {% include "accounts/_org_nav.html" %}
+
+    <div class="infra-main">
+
+        <div class="infra-breadcrumb">
+            <span class="infra-breadcrumb-current">Связь с ССОД</span>
+            <span class="infra-spacer"></span>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="org-message org-message-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <section class="infra-section">
+            <div class="infra-section-head">
+                <h2>Написать нам</h2>
+                <p class="infra-section-note">
+                    Сообщение уходит вашему инженеру: письмом на почту ССОД
+                    и сразу в рабочий мессенджер, чтобы его увидели быстрее.
+                </p>
+            </div>
+
+            <form method="post" class="org-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="org-message org-message-error">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="org-field">
+                    <label for="{{ form.author.id_for_label }}">Кто обращается</label>
+                    {{ form.author }}
+                    {% if form.author.errors %}<div class="org-field-error">{{ form.author.errors|first }}</div>{% endif %}
+                </div>
+
+                <div class="org-field">
+                    <label for="{{ form.contact.id_for_label }}">Как ответить</label>
+                    {{ form.contact }}
+                    <div class="org-field-hint">Почта или телефон. Можно не указывать — ответим по известным контактам.</div>
+                    {% if form.contact.errors %}<div class="org-field-error">{{ form.contact.errors|first }}</div>{% endif %}
+                </div>
+
+                <div class="org-field">
+                    <label for="{{ form.message.id_for_label }}">Сообщение</label>
+                    {{ form.message }}
+                    {% if form.message.errors %}<div class="org-field-error">{{ form.message.errors|first }}</div>{% endif %}
+                </div>
+
+                <div class="org-form-actions">
+                    <button class="button primary" type="submit">Отправить</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="infra-section">
+            <div class="infra-section-head">
+                <h2>Другие способы</h2>
+            </div>
+
+            <div class="org-contacts">
+                <div class="org-contact-item">
+                    <span class="org-contact-label">Почта</span>
+                    <a href="mailto:{{ support_email }}">{{ support_email }}</a>
+                </div>
+                <div class="org-contact-item">
+                    <span class="org-contact-label">Телефон</span>
+                    <a href="tel:+79955050186">+7 995 505-01-86</a>
+                </div>
+                <div class="org-contact-item">
+                    <span class="org-contact-label">Мессенджер</span>
+                    <span>Dominex Vox — сообщение уходит в канал поддержки</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

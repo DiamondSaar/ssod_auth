@@ -254,6 +254,16 @@ class CustomUser(AbstractUser):
         verbose_name_plural = "Пользователи"
         ordering = ["last_name", "first_name", "username"]
 
+    is_organization_account = models.BooleanField(
+        "Кабинет юридического лица",
+        default=False,
+        help_text=(
+            "Обезличенная учётная запись организации: вместо личного кабинета "
+            "открывается кабинет юрлица (/account/org/) с мониторингом, документами "
+            "и связью. Личные разделы такой учётке недоступны."
+        ),
+    )
+
     @property
     def can_view_infrastructure(self):
         """Видна ли пользователю сводка по инфраструктуре его организации.

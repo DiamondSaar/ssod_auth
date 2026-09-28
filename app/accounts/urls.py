@@ -22,6 +22,13 @@ urlpatterns = [
 
     path("infrastructure/", views.infrastructure, name="infrastructure"),
 
+    # Кабинет юридического лица: обезличенная учётная запись организации
+    # живёт только здесь, личные разделы ей закрыты посредником
+    # accounts.middleware.OrganizationCabinetMiddleware.
+    path("org/", views.org_home, name="org_home"),
+    path("org/documents/", views.org_documents, name="org_documents"),
+    path("org/contact/", views.org_contact, name="org_contact"),
+
     path("repository/", views.repository_list, name="repository_list"),
     path("repository/<int:item_id>/", views.repository_item_detail, name="repository_item_detail"),
 

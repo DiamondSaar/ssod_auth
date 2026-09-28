@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Документы — кабинет организации{% endblock %}
+
+{% block main_class %}infra-page{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'accounts/css/infrastructure.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/org_cabinet.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="infra-shell">
+
+    {% include "accounts/_org_nav.html" %}
+
+    <div class="infra-main">
+
+        <div class="infra-breadcrumb">
+            <span class="infra-breadcrumb-current">Документы</span>
+            <span class="infra-spacer"></span>
+        </div>
+
+        <section class="infra-section">
+            <div class="infra-section-head">
+                <h2>Документы организации</h2>
+            </div>
+
+            <div class="org-empty">
+                <p>
+                    Раздел в подготовке. Здесь будут договоры, счета и акты
+                    по организации{% if organization_name %} «{{ organization_name }}»{% endif %}:
+                    с датами, суммами и скачиванием.
+                </p>
+                <p>
+                    Пока документы приходят обычной почтой. Нужен документ прямо
+                    сейчас — напишите нам в разделе
+                    <a href="{% url 'accounts:org_contact' %}">«Связь с ССОД»</a>.
+                </p>
+            </div>
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

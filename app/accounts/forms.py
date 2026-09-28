@@ -208,3 +208,39 @@ class PortalDeployForm(forms.Form):
         if method == "key" and not cleaned.get("ssh_private_key"):
             self.add_error("ssh_private_key", "Вставьте приватный ключ или выберите вход по паролю.")
         return cleaned
+
+
+class OrgContactForm(forms.Form):
+    """
+    Обращение из кабинета юридического лица.
+
+    Организация не спрашивается: она известна по учётной записи, под
+    которой человек вошёл. Спрашиваем только то, чего система не знает, —
+    кто пишет, как ответить и что случилось.
+    """
+
+    author = forms.CharField(
+        label="Кто обращается",
+        max_length=120,
+        widget=forms.TextInput(attrs={"placeholder": "Имя и должность"}),
+    )
+
+    contact = forms.CharField(
+        label="Как ответить",
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Почта или телефон"}),
+    )
+
+    message = forms.CharField(
+        label="Сообщение",
+        widget=forms.Textarea(attrs={"placeholder": "Опишите вопрос или задачу"}),
+    )
+
+    def clean_message(self):
+        message = (self.cleaned_data.get("message") or "").strip()
+
+        if len(message) < 10:
+            raise forms.ValidationError("Опишите вопрос подробнее — хотя бы одним предложением.")
+
+        return message

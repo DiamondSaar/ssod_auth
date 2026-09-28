@@ -76,6 +76,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    "accounts.middleware.OrganizationCabinetMiddleware",
     "django_otp.middleware.OTPMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -364,3 +365,15 @@ DOMINEX_ADMIN_API_KEY = env("DOMINEX_ADMIN_API_KEY", default="dev-admin-bridge-k
 # the usual other way), own secret again - same rule as
 # DOMINEX_ADMIN_API_KEY above, not reused from it or from anything else.
 BIOGRAPHIA_KEY_API_KEY = env("BIOGRAPHIA_KEY_API_KEY", default="dev-biographia-key-api-change-me")
+
+
+# ---------------------------------------------------------------------
+# Кабинет юридического лица (/account/org/)
+# ---------------------------------------------------------------------
+
+# Входящая интеграция Dominex Vox: обращения из кабинета падают в канал
+# поддержки. Пусто — форма продолжает работать, но уходит только письмом.
+VOX_SUPPORT_WEBHOOK_URL = env("VOX_SUPPORT_WEBHOOK_URL", default="")
+
+# Куда уходит письмо с обращением из кабинета юрлица.
+ORG_SUPPORT_EMAIL = env("ORG_SUPPORT_EMAIL", default="info@ssod.pro")

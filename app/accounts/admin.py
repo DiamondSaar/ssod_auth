@@ -35,6 +35,7 @@ class CustomUserAdmin(UserAdmin):
         "username",
         "full_name_ru",
         "organization",
+        "is_organization_account",
         "position",
         "access_class",
         "is_active",
@@ -43,6 +44,7 @@ class CustomUserAdmin(UserAdmin):
     )
 
     list_filter = (
+        "is_organization_account",
         "is_active",
         "is_staff",
         "access_class",
@@ -73,6 +75,8 @@ class CustomUserAdmin(UserAdmin):
                     # Локальный флаг, а не проекция из Dominex - остаётся
                     # редактируемым и в DOMINEX_CONNECTED_MODE.
                     "infrastructure_access_override",
+                    # Обезличенная учётка организации: открывает кабинет юрлица.
+                    "is_organization_account",
                 )
             },
         ),
