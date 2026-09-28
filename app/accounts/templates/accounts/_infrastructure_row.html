@@ -9,12 +9,21 @@
             {% if nested %}<span class="infra-nest-mark" aria-hidden="true">└</span>{% endif %}<span class="infra-name">{{ item.name|default:"—" }}</span>
             <span class="infra-kind">{{ item.kind }}</span>
         </div>
-        <div class="infra-sub mono">
-            {{ item.hostname|default:"—" }}{% if item.management_address %} · {{ item.management_address }}{% endif %}
-        </div>
-        <div class="infra-sub">
-            {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}
-        </div>
+        {% comment %}
+        Имя узла, адрес и ОС — одной строкой. Раньше это были три строки,
+        и у Кинетика адрес с пояснением («10.21.0.2 (через туннель…),
+        веб/RCI :80») занимал их целиком, раздувая высоту строки таблицы.
+        Что не влезло по ширине — раскрывается по наведению.
+        {% endcomment %}
+        <span class="infra-meta" tabindex="0">
+            <span class="infra-meta-line infra-sub mono">{{ item.hostname|default:"—" }}{% if item.management_address %} · {{ item.management_address }}{% endif %} · {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}</span>
+            <span class="infra-meta-pop">
+                <span class="infra-meta-row"><span class="infra-sub">Имя</span><span class="mono">{{ item.hostname|default:"—" }}</span></span>
+                {% if item.management_address %}<span class="infra-meta-row"><span class="infra-sub">Адрес</span><span class="mono">{{ item.management_address }}</span></span>{% endif %}
+                <span class="infra-meta-row"><span class="infra-sub">Система</span><span>{{ item.os|default:"не указана" }}</span></span>
+                {% if item.room %}<span class="infra-meta-row"><span class="infra-sub">Размещение</span><span>{{ item.room }}</span></span>{% endif %}
+            </span>
+        </span>
 
         {% comment %}
         Точки авторизации — рядом со своим узлом, а не отдельным списком
