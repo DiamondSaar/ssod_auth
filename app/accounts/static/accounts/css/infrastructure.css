@@ -857,3 +857,34 @@
         display: none;
     }
 }
+
+/* Диски: полосы занятости по разделам и список накопителей — разные
+   сущности, поэтому у каждой группы своя подпись. Без подписей список
+   читался как продолжение полос (замечание владельца 2026-09-28). */
+
+.infra-disk-label {
+    margin: 2px 0 4px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--infra-muted-dim);
+}
+
+.infra-fs + .infra-disk-label {
+    margin-top: 9px;
+}
+
+.infra-disk-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.infra-disk-list li {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 12.5px;
+    line-height: 1.5;
+}

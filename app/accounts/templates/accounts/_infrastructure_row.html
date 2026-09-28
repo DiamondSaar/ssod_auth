@@ -60,6 +60,7 @@
     {% endcomment %}
     <td>
         {% if item.filesystems %}
+            <div class="infra-disk-label">Занято по разделам</div>
             {% for fs in item.filesystems %}
                 <div class="infra-fs">
                     <div class="infra-metric-top">
@@ -80,10 +81,25 @@
                 <span class="mono">н/д</span>
             </div>
         {% endif %}
+        {% comment %}
+        Полосы выше — занятое место по РАЗДЕЛАМ (C:, /var/lib/mainstore),
+        ниже — физические НАКОПИТЕЛИ из карточки. Это разные вещи, и
+        поставить их в соответствие строка в строку нельзя: на одном томе
+        RAID лежит несколько разделов, а раздел может занимать часть тома.
+        Раньше список шёл сразу под полосами без подписи и читался как их
+        продолжение — отсюда путаница. Теперь у обеих групп свой заголовок,
+        а накопители идут по одному в строке.
+        {% endcomment %}
         {% if item.disks %}
-            <div class="infra-sub">
-                {% for disk in item.disks %}{{ disk.model|default:disk.name }}{% if disk.capacity %} {{ disk.capacity }}{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}
-            </div>
+            <div class="infra-disk-label">Накопители · {{ item.disks|length }}</div>
+            <ul class="infra-disk-list">
+                {% for disk in item.disks %}
+                    <li>
+                        <span class="infra-sub">{{ disk.model|default:disk.name }}</span>
+                        {% if disk.capacity %}<span class="mono">{{ disk.capacity }}</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
         {% endif %}
     </td>
 
