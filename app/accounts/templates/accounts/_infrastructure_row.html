@@ -26,9 +26,8 @@
         {% if item.auth_points or item.access_lists %}
             <span class="infra-access" tabindex="0">
                 <span class="infra-access-chip">
-                    Доступ
-                    {% for point in item.auth_points %}<span class="mono">{{ point.short }}</span>{% if not forloop.last %}<span class="infra-access-sep">,</span>{% endif %}{% endfor %}
-                    {% if item.access_lists %}<span class="infra-access-count">+{% for list in item.access_lists %}{{ list.items|length }}{% if not forloop.last %}/{% endif %}{% endfor %} доступов</span>{% endif %}
+                    <span class="infra-access-label">Доступ</span>
+                    <span class="infra-access-summary mono">{% for point in item.auth_points %}{{ point.short }}{% if not forloop.last %} · {% endif %}{% endfor %}{% if item.access_lists %}{% if item.auth_points %} · {% endif %}{% for list in item.access_lists %}{{ list.items|length }} доступов{% if not forloop.last %} · {% endif %}{% endfor %}{% endif %}</span>
                 </span>
 
                 <span class="infra-access-pop">

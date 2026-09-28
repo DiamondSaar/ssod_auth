@@ -967,15 +967,36 @@
 
 .infra-access-chip {
     display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 5px;
+    align-items: baseline;
+    gap: 6px;
+    max-width: 320px;
     padding: 2px 9px;
     border: 1px solid var(--infra-border-inner);
     border-radius: 999px;
     font-size: 11.5px;
     color: var(--infra-muted);
     cursor: default;
+    white-space: nowrap;
+}
+
+/* Сводка — строго одна строка: перенос раздувал высоту строки таблицы,
+   ради чего всё и переносилось из правой колонки. Что не влезло —
+   видно в окне по наведению. */
+.infra-access-summary {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.infra-access-label {
+    flex: 0 0 auto;
+    color: var(--infra-muted-dim);
+}
+
+/* Окно не должно вырастать на весь экран, когда доступов много. */
+.infra-access-pop {
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .infra-access:hover .infra-access-chip,
