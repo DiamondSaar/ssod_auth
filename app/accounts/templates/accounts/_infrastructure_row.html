@@ -15,6 +15,54 @@
         <div class="infra-sub">
             {{ item.os|default:"ОС не указана" }}{% if item.room %} · {{ item.room }}{% endif %}
         </div>
+
+        {% comment %}
+        Точки авторизации — рядом со своим узлом, а не отдельным списком
+        в стороне: вопрос «как сюда заходят» возникает про конкретный
+        сервер. В строке — только короткая сводка «протокол · порт»,
+        подробности раскрываются по наведению, иначе узел с тремя входами
+        занимал пол-экрана. Секретов здесь нет ни в каком виде.
+        {% endcomment %}
+        {% if item.auth_points or item.access_lists %}
+            <span class="infra-access" tabindex="0">
+                <span class="infra-access-chip">
+                    Доступ
+                    {% for point in item.auth_points %}<span class="mono">{{ point.protocol|default:"—" }}{% if point.port %} · {{ point.port }}{% endif %}</span>{% if not forloop.last %}<span class="infra-access-sep">,</span>{% endif %}{% endfor %}
+                    {% if item.access_lists %}<span class="infra-access-count">+{% for list in item.access_lists %}{{ list.items|length }}{% if not forloop.last %}/{% endif %}{% endfor %} доступов</span>{% endif %}
+                </span>
+
+                <span class="infra-access-pop">
+                    {% for point in item.auth_points %}
+                        <span class="infra-access-point">
+                            <span class="infra-access-line">
+                                <span class="mono">{{ point.endpoint|default:"адрес не указан" }}</span>
+                                {% if point.protocol %}<span class="infra-proto mono">{{ point.protocol }}{% if point.port %} · {{ point.port }}{% endif %}</span>{% endif %}
+                            </span>
+                            <span class="infra-sub">
+                                {{ point.method }}{% if point.login %} · учётная запись {{ point.login }}{% endif %}
+                            </span>
+                            {% if point.note %}<span class="infra-sub">{{ point.note }}</span>{% endif %}
+                        </span>
+                    {% endfor %}
+
+                    {% for list in item.access_lists %}
+                        <span class="infra-access-point">
+                            <span class="infra-access-line">
+                                <span>{{ list.title }}</span>
+                                <span class="infra-sub mono">{{ list.items|length }}</span>
+                            </span>
+                            <span class="infra-access-logins">
+                                {% for access in list.items %}<span class="mono" title="{{ access.state }}{% if access.holder %} · {{ access.holder }}{% endif %}">{{ access.login }}</span>{% if not forloop.last %}<span class="infra-access-sep">,</span>{% endif %}{% endfor %}
+                            </span>
+                        </span>
+                    {% endfor %}
+
+                    <span class="infra-sub infra-access-foot">
+                        Пароли и ключи остаются в консоли инженера.
+                    </span>
+                </span>
+            </span>
+        {% endif %}
     </td>
 
     <td>

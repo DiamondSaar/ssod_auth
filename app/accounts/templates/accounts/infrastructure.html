@@ -53,7 +53,6 @@
         <a href="#infra-backups">Резервные копии</a>
         <a href="#infra-staff">Сотрудники</a>
         <a href="#infra-net-domains">Сеть и домены</a>
-        <a href="#infra-auth-points">Точки авторизации</a>
         <a href="#infra-logins">Попытки входа</a>
         <a href="#infra-problems">Проблемы</a>
         <a href="#infra-sources">Источники данных</a>
@@ -577,34 +576,7 @@
             Пароли и ключи остаются в консоли инженера — прямое
             требование дизайн-пакета.
             {% endcomment %}
-            <div class="infra-panel" id="infra-auth-points">
-                <div class="infra-panel-head">
-                    <h2>Точки авторизации</h2>
-                    <span class="infra-spacer"></span>
-                    <span class="mono">{{ auth_points|length }}</span>
-                </div>
-                {% for point in auth_points %}
-                    <div class="infra-authpoint">
-                        <div class="infra-authpoint-main">
-                            <div>{{ point.host|default:"—" }}</div>
-                            <div class="infra-sub mono">
-                                {{ point.endpoint|default:"" }}{% if point.method %} · {{ point.method }}{% endif %}
-                            </div>
-                        </div>
-                        {% if point.protocol %}
-                            <span class="infra-proto mono">
-                                {{ point.protocol }}{% if point.port %} · {{ point.port }}{% endif %}
-                            </span>
-                        {% endif %}
-                    </div>
-                {% empty %}
-                    <div class="infra-empty infra-empty-small">
-                        Учётные данные в карточках оборудования не заполнены.
-                    </div>
-                {% endfor %}
-                <div class="infra-panel-foot">
-                    Пароли и ключи — в консоли инженера, класс доступа E и выше.
-                </div>
+
             </div>
 
             {% comment %}
