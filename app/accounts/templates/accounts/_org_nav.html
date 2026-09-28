@@ -49,8 +49,14 @@ show_anchors — показывать ли якоря страницы мони�
         </div>
     </div>
 
-    <div class="org-nav-exit">
-        <a href="{% url 'accounts:logout' %}">Выйти</a>
-    </div>
+    {% comment %}
+    Выход — только отправкой формы: Django с 5.0 не принимает выход
+    обычным переходом по ссылке и отвечает 405. Ссылкой это выглядело
+    рабочим, но не выходило.
+    {% endcomment %}
+    <form class="org-nav-exit" method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit">Выйти</button>
+    </form>
 
 </nav>
