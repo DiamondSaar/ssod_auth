@@ -48,6 +48,9 @@ def send_support_message(organization_name, author, text, contact=""):
 
     payload = {
         "roomId": room_id,
+        # Подпись сообщения: пишет служебная учётная запись, но в канале
+        # это должно читаться как обращение клиента, а не реплика «Дежурного».
+        "alias": "Кабинет клиента",
         "text": "\n".join(header) + "\n\n" + text.strip(),
     }
 
