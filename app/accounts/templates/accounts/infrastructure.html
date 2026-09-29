@@ -598,12 +598,23 @@
                             </div>
                         {% endif %}
 
+                        {% comment %}
+                            Обе величины считаются за одни и те же сутки, но раньше рядом
+                            с числом успешных входов период не стоял, и оно читалось как
+                            «всего за всё время». Подписываем период и показываем успешные
+                            входы в разбивке рядом с неуспешными: сразу видно, что сотни
+                            «успешных» приходят не от людей, а от служебных сессий узла.
+                        {% endcomment %}
                         <div class="infra-logins-rows">
+                            <div class="infra-logins-row infra-logins-legend">
+                                <span class="infra-sub">за 24 часа</span>
+                                <span class="mono">неуспешных · успешных</span>
+                            </div>
                             {% for row in logins.by_host %}
                                 <div class="infra-logins-row">
                                     <span class="infra-sub">{{ row.host }}</span>
                                     <span class="mono {% if row.failed %}infra-text-bad{% endif %}">
-                                        {{ row.failed }}
+                                        {{ row.failed }}<span class="infra-logins-ok"> · {{ row.accepted }}</span>
                                     </span>
                                 </div>
                             {% empty %}
@@ -611,7 +622,7 @@
                             {% endfor %}
                             {% if logins.accepted_total %}
                                 <div class="infra-logins-row">
-                                    <span class="infra-sub">успешных входов</span>
+                                    <span class="infra-sub">успешных входов · 24ч</span>
                                     <span class="mono">{{ logins.accepted_total }}</span>
                                 </div>
                             {% endif %}
