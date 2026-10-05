@@ -292,6 +292,34 @@ class CustomUser(AbstractUser):
         return self.position.name.strip().casefold() in allowed
 
     @property
+    def can_view_mail_systems(self):
+        """Видна ли пользователю плитка «Почтовые системы».
+
+        Раздел внутренний: ссылки на корпоративную почту ССОД и на
+        временную почту хостинга. Пользователю другой организации он не
+        нужен — войти туда он всё равно не сможет, а лишняя плитка в
+        кабинете только путает.
+
+        Своих определяем по организации. ИНН надёжнее названия, но в
+        справочнике живут три записи ССОД с разным написанием и ИНН
+        заполнен лишь у одной, поэтому в SSOD_ORGANIZATION_MARKS лежат и
+        ИНН, и имена — список один, сравнение одинаковое.
+        """
+        if self.is_staff:
+            return True
+        if self.organization is None:
+            return False
+        marks = {
+            str(mark).strip().casefold()
+            for mark in getattr(settings, "SSOD_ORGANIZATION_MARKS", [])
+            if str(mark).strip()
+        }
+        return (
+            (self.organization.inn or "").strip().casefold() in marks
+            or self.organization.name.strip().casefold() in marks
+        )
+
+    @property
     def full_name_ru(self):
         """
         ФИО одной строкой.

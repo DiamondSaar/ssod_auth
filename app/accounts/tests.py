@@ -147,3 +147,52 @@ class OrganizationCabinetTests(TestCase):
         self.client.force_login(self.person)
 
         self.assertEqual(self.client.get("/account/products/").status_code, 200)
+
+
+class MailSystemsTests(TestCase):
+    """
+    «Почтовые системы» — внутренний раздел ССОД: две ссылки на вход в
+    почту. Пользователю чужой организации плитка не нужна (войти он туда
+    всё равно не сможет), поэтому раздел закрыт и в кабинете не виден.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.ssod = Organization.objects.create(name="ССОД-тест", inn="7716259720")
+        self.client_org = Organization.objects.create(name="Клиент-тест", inn="1234567890")
+
+        self.ours = User.objects.create_user(username="ssod-user", password="x")
+        self.ours.organization = self.ssod
+        self.ours.save()
+
+        self.theirs = User.objects.create_user(username="client-user", password="x")
+        self.theirs.organization = self.client_org
+        self.theirs.save()
+
+        self.staff = User.objects.create_user(username="staffer", password="x", is_staff=True)
+
+    def test_page_opens_for_our_organization(self):
+        self.client.force_login(self.ours)
+
+        response = self.client.get("/account/mail/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "https://mail.ssod.pro/")
+        self.assertContains(response, "https://webmail.hosting.reg.ru/")
+
+    def test_page_opens_for_staff_without_organization(self):
+        self.client.force_login(self.staff)
+
+        self.assertEqual(self.client.get("/account/mail/").status_code, 200)
+
+    def test_page_hidden_from_other_organization(self):
+        self.client.force_login(self.theirs)
+
+        self.assertEqual(self.client.get("/account/mail/").status_code, 404)
+
+    def test_tile_shown_only_to_us(self):
+        self.client.force_login(self.ours)
+        self.assertContains(self.client.get("/account/"), "Почтовые системы")
+
+        self.client.force_login(self.theirs)
+        self.assertNotContains(self.client.get("/account/"), "Почтовые системы")

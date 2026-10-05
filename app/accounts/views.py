@@ -431,6 +431,49 @@ def infrastructure(request):
     )
 
 
+# Почтовые системы ССОД. Список короткий и меняется редко, поэтому живёт
+# здесь, а не в базе: заводить таблицу и админку ради двух ссылок — лишняя
+# работа и лишнее место, где они могут разойтись.
+#
+# Переезд почты ssod.pro с reg.ru на свой mail-core идёт до 24.10.2026
+# (размещение на хостинге оплачено до этой даты), поэтому пока работают обе
+# точки входа. Когда переезд завершится, запись про reg.ru отсюда убрать.
+MAIL_SYSTEMS = (
+    {
+        "name": "Почта ССОД",
+        "url": "https://mail.ssod.pro/",
+        "description": "Корпоративная почта на нашем сервере.",
+        "note": "Основная",
+    },
+    {
+        "name": "Почта на хостинге reg.ru",
+        "url": "https://webmail.hosting.reg.ru/",
+        "description": "Ящики ssod.pro, пока не завершён переезд на свой сервер.",
+        "note": "Временная",
+    },
+)
+
+
+@login_required
+def mail_systems(request):
+    """
+    Раздел «Почтовые системы» — точки входа в почту.
+
+    Ничего, кроме ссылок: вход в каждую систему делается в ней самой,
+    единого входа тут нет и не предполагается.
+    """
+    if not request.user.can_view_mail_systems:
+        raise Http404
+
+    return render(
+        request,
+        "accounts/mail_systems.html",
+        {
+            "systems": MAIL_SYSTEMS,
+        },
+    )
+
+
 @login_required
 def repository_list(request):
     """

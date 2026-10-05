@@ -34,6 +34,17 @@ account-page
             </p>
         </a>
 
+        {% comment %}
+            Почтовые системы — внутренний раздел ССОД; правило видимости
+            целиком в CustomUser.can_view_mail_systems.
+        {% endcomment %}
+        {% if request.user.can_view_mail_systems %}
+            <a class="admin-card" href="{% url 'accounts:mail_systems' %}">
+                <h2>Почтовые системы</h2>
+                <p>Вход в корпоративную почту ССОД и в почту на хостинге.</p>
+            </a>
+        {% endif %}
+
         <a class="admin-card" href="{% url 'accounts:security' %}">
             <h2>Безопасность</h2>
             <p>Passkey, устройства входа и API-ключи ССОД.</p>

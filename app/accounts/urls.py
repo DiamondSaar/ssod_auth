@@ -29,6 +29,8 @@ urlpatterns = [
     path("org/documents/", views.org_documents, name="org_documents"),
     path("org/contact/", views.org_contact, name="org_contact"),
 
+    path("mail/", views.mail_systems, name="mail_systems"),
+
     path("repository/", views.repository_list, name="repository_list"),
     path("repository/<int:item_id>/", views.repository_item_detail, name="repository_item_detail"),
 

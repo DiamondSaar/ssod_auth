@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Почтовые системы — ССОД Auth Center{% endblock %}
+
+{% block content %}
+
+<section class="account-products-page">
+
+    <div class="account-products-header">
+        <div>
+            <div class="page-pill">Личный кабинет</div>
+            <h1>Почтовые системы</h1>
+            <p>
+                Точки входа в почту. Вход выполняется в самой системе —
+                учётная запись кабинета сюда не передаётся.
+            </p>
+        </div>
+    </div>
+
+    {% comment %}
+        Та же сетка карточек, что в «Репозитории». Ссылки внешние, поэтому
+        открываем в новой вкладке и ставим rel="noopener": без него открытая
+        страница получает доступ к окну кабинета через window.opener.
+    {% endcomment %}
+    <div class="product-card-grid">
+
+        {% for system in systems %}
+            <a
+                class="product-card"
+                href="{{ system.url }}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+
+                <div class="product-card-logo-wrap">
+                    <div class="product-card-logo-placeholder">@</div>
+                </div>
+
+                <div class="product-card-info">
+                    <div class="product-card-field product-card-title">
+                        {{ system.name }}
+                    </div>
+                    <div class="product-card-field">
+                        {{ system.description }}
+                    </div>
+                    <div class="product-card-field mail-system-link">
+                        {{ system.note }} · {{ system.url }}
+                    </div>
+                </div>
+
+            </a>
+        {% endfor %}
+
+    </div>
+
+</section>
+
+{% endblock %}
