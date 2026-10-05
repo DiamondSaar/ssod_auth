@@ -161,15 +161,21 @@ class MailSystemsTests(TestCase):
         self.ssod = Organization.objects.create(name="ССОД-тест", inn="7716259720")
         self.client_org = Organization.objects.create(name="Клиент-тест", inn="1234567890")
 
+        # must_change_password по умолчанию включён и уводит с главной
+        # кабинета на смену пароля — здесь проверяется не он.
         self.ours = User.objects.create_user(username="ssod-user", password="x")
         self.ours.organization = self.ssod
+        self.ours.must_change_password = False
         self.ours.save()
 
         self.theirs = User.objects.create_user(username="client-user", password="x")
         self.theirs.organization = self.client_org
+        self.theirs.must_change_password = False
         self.theirs.save()
 
         self.staff = User.objects.create_user(username="staffer", password="x", is_staff=True)
+        self.staff.must_change_password = False
+        self.staff.save()
 
     def test_page_opens_for_our_organization(self):
         self.client.force_login(self.ours)
