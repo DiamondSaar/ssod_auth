@@ -22,6 +22,9 @@ services:
       - ssod_auth_db
     ports:
       - "127.0.0.1:8010:8000"
+    # почта уходит через mail-core по туннелю wg-mail; имя — под сертификат mail.ssod.pro
+    extra_hosts:
+      - "mail.ssod.pro:10.60.0.2"
     volumes:
       - ./app:/app
 
