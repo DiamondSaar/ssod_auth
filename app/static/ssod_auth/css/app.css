@@ -536,3 +536,31 @@ textarea:focus {
     color: var(--text-muted);
     font-size: 15px;
 }
+
+/* Кнопка «Написать в ССОД» — окно чата Dominex Vox (templates/_vox_chat.html).
+   Своя кнопка вместо стандартной кнопки виджета: на той вендорская эмблема. */
+.vox-chat-launcher {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 9000;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 6px;
+    border: 1px solid rgba(201, 211, 227, 0.35);
+    border-radius: 999px;
+    background: #13284c;
+    color: #e8eef7;
+    font: 600 14px/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+}
+.vox-chat-launcher[hidden] { display: none; }
+.vox-chat-launcher:hover { border-color: #f39a1e; }
+.vox-chat-emblem { width: 44px; height: 44px; flex: none; }
+@media (max-width: 600px) {
+    .vox-chat-label { display: none; }
+    .vox-chat-launcher { padding: 6px; right: 14px; bottom: 14px; }
+}
+

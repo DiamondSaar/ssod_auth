@@ -94,6 +94,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.vox_chat',
             ],
         },
     },
@@ -392,6 +393,11 @@ VOX_API_URL = env("VOX_API_URL", default="")
 VOX_BOT_TOKEN = env("VOX_BOT_TOKEN", default="")
 VOX_BOT_USER_ID = env("VOX_BOT_USER_ID", default="")
 VOX_SUPPORT_ROOM_ID = env("VOX_SUPPORT_ROOM_ID", default="")
+
+# Окно чата «Написать в ССОД» на страницах кабинета — виджет омниканала Vox ССОД
+# (не Vox АТВ). Пусто — окна нет. Отдел омниканала, куда падают обращения.
+VOX_CHAT_URL = env("VOX_CHAT_URL", default="")
+VOX_CHAT_DEPARTMENT = env("VOX_CHAT_DEPARTMENT", default="")
 
 # Куда уходит письмо с обращением из кабинета юрлица.
 ORG_SUPPORT_EMAIL = env("ORG_SUPPORT_EMAIL", default="info@ssod.pro")

@@ -1,0 +1,52 @@
+{% comment %}
+Кнопка «Написать в ССОД» и окно чата — виджет омниканала Dominex Vox ССОД.
+Стандартную кнопку виджета прячем (на ней вендорская эмблема) и показываем свою —
+с эмблемой Dominex. По нажатию разворачиваем окно чата; свернули — окно снова
+прячется, остаётся наша кнопка. Контекст — accounts.context_processors.vox_chat.
+{% endcomment %}
+<button type="button" class="vox-chat-launcher" id="vox-chat-launcher" title="Написать в ССОД" aria-label="Написать в ССОД" hidden>
+    <svg class="vox-chat-emblem" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+            <linearGradient id="voxDxBg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2b4f8f"/><stop offset="1" stop-color="#132a52"/>
+            </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="30" fill="url(#voxDxBg)"/>
+        <circle cx="32" cy="32" r="26.5" fill="none" stroke="#c9d3e3" stroke-width="2.4"/>
+        <text x="27" y="42" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="30" fill="#e8eef7">D</text>
+        <text x="42.5" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="19" fill="#f39a1e">x</text>
+    </svg>
+    <span class="vox-chat-label">Написать в ССОД</span>
+</button>
+<script>
+(function (w, d, s, u) {
+    w.RocketChat = function (c) { w.RocketChat._.push(c); };
+    w.RocketChat._ = [];
+    w.RocketChat.url = u;
+    var h = d.getElementsByTagName(s)[0], j = d.createElement(s);
+    j.async = true;
+    j.src = '{{ vox_chat.url }}/livechat/rocketchat-livechat.min.js?_=201903270000';
+    h.parentNode.insertBefore(j, h);
+})(window, document, 'script', '{{ vox_chat.url }}/livechat');
+RocketChat(function () {
+    var api = this;
+    var button = document.getElementById('vox-chat-launcher');
+    api.hideWidget();
+    api.registerGuest({
+        token: '{{ vox_chat.token|escapejs }}',
+        name: '{{ vox_chat.name|escapejs }}'{% if vox_chat.email %},
+        email: '{{ vox_chat.email|escapejs }}'{% endif %}{% if vox_chat.department %},
+        department: '{{ vox_chat.department|escapejs }}'{% endif %}
+    });
+    button.hidden = false;
+    button.addEventListener('click', function () {
+        button.hidden = true;
+        api.showWidget();
+        api.maximizeWidget();
+    });
+    api.onChatMinimized(function () {
+        api.hideWidget();
+        button.hidden = false;
+    });
+});
+</script>

@@ -17,6 +17,7 @@
 
     <!-- Общий JS проекта. Пока почти пустой, но структура уже правильная. -->
     <script src="{% static 'ssod_auth/js/app.js' %}"></script>
+    {% if vox_chat %}{% include "_vox_chat.html" %}{% endif %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>
