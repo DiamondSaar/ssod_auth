@@ -1,0 +1,16 @@
+{% comment %}Строка «оплачено до»: until — дата ISO, days — дней осталось (None — неизвестно).
+Пороги совпадают с оповещениями Zabbix: 30 / 15 / 3 дня.{% endcomment %}
+<div class="infra-row">
+    <span class="infra-row-main">{{ label }}</span>
+    {% if not until %}
+        <span class="infra-sub">не указано</span>
+    {% elif days is None %}
+        <span class="mono infra-sub">до {{ until }}</span>
+    {% elif days <= 3 %}
+        <span class="infra-state infra-state-bad">до {{ until }} · {{ days }} дн.</span>
+    {% elif days <= 30 %}
+        <span class="infra-state infra-state-warn">до {{ until }} · {{ days }} дн.</span>
+    {% else %}
+        <span class="mono infra-sub">до {{ until }} · {{ days }} дн.</span>
+    {% endif %}
+</div>

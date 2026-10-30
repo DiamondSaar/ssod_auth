@@ -1,0 +1,177 @@
+{% comment %}
+Сайт и кабинеты внешних сервисов клиента — для организаций без своего «железа»
+(первый — ТД Балтийский Титан, 2026-10-30). Порядок задан владельцем: регистратор
+и хостинг, вход в облачную почту, затем сроки и состояние сайта.
+
+Пароли приходят из Dominex только админу ЛК юрлица (accounts[].credentials) и
+по умолчанию скрыты: показываются по кнопке, копируются по кнопке. Страница
+отдаётся с never_cache — копии паролей не остаются в кэше браузера и прокси.
+Ожидает в контексте: accounts, sites (см. views.infrastructure).
+{% endcomment %}
+
+{% for account in accounts %}
+{% if account.kind == "registrar_account" %}
+<section class="infra-section" id="infra-registrar">
+    <div class="infra-section-head">
+        <h2>Регистратор и хостинг · {{ account.provider|default:"REG.RU"|truncatechars:40 }}</h2>
+        <span class="infra-spacer"></span>
+        <span class="infra-section-note">домен, хостинг, DNS, оплата</span>
+    </div>
+    <div class="infra-rows">
+        {% if account.management_address %}
+            <div class="infra-row">
+                <span class="infra-row-main">Личный кабинет</span>
+                <a class="mono" href="{{ account.management_address }}" target="_blank" rel="noopener">{{ account.management_address }}</a>
+            </div>
+        {% endif %}
+        {% for cred in account.credentials %}
+            {% include "accounts/_cred_row.html" with label="Логин" value=cred.username %}
+            {% include "accounts/_cred_row.html" with label="Пароль" secret=cred.password %}
+        {% empty %}
+            {% if not account.has_secrets %}
+                <div class="infra-row"><span class="infra-sub">Логин и пароль видны администратору кабинета организации.</span></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% if account.ssh %}
+        <div class="infra-panel-foot">
+            <div class="infra-fact-label">Доступ к хостингу по SSH — только по ключам (открытые отпечатки)</div>
+            {% for entry in account.ssh %}
+                <div class="mono infra-sub cred-wrap">{{ entry.address }}</div>
+                <div class="infra-sub cred-wrap">{{ entry.who }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+{% endif %}
+{% endfor %}
+
+{% for account in accounts %}
+{% if account.kind == "cloud_account" %}
+<section class="infra-section" id="infra-cloud-{{ account.id }}">
+    <div class="infra-section-head">
+        <h2>Вход в {{ account.provider|default:account.name|cut:" для бизнеса (ООО «Яндекс»)"|cut:" (ООО «Яндекс»)" }}</h2>
+        <span class="infra-spacer"></span>
+        {% if account.paid_until %}
+            <span class="infra-section-note">оплачено до {{ account.paid_until }}</span>
+        {% endif %}
+    </div>
+    <div class="infra-rows">
+        {% if account.management_address %}
+            <div class="infra-row">
+                <span class="infra-row-main">Администрирование</span>
+                <a class="mono" href="{{ account.management_address }}" target="_blank" rel="noopener">{{ account.management_address }}</a>
+            </div>
+        {% endif %}
+        {% if account.tariff %}
+            <div class="infra-row">
+                <span class="infra-row-main">Тариф</span>
+                <span class="infra-sub">{{ account.tariff }}</span>
+            </div>
+        {% endif %}
+        {% for box in account.mailbox_credentials %}
+            {% for cred in box.credentials %}
+                {% include "accounts/_cred_row.html" with label=box.name secret=cred.password mail=True %}
+            {% empty %}
+                <div class="infra-row"><span class="infra-row-main mono">{{ box.name }}</span></div>
+            {% endfor %}
+        {% empty %}
+            {% for name in account.mailboxes %}
+                <div class="infra-row">
+                    <span class="infra-row-main mono">{{ name }}</span>
+                    {% if not account.has_secrets %}<span class="infra-sub">пароль — у администратора кабинета</span>{% endif %}
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+    {% if account.mailboxes %}
+        <div class="infra-panel-foot infra-sub">
+            Почта в браузере — <a href="https://mail.yandex.ru" target="_blank" rel="noopener">mail.yandex.ru</a>;
+            в почтовой программе: IMAP imap.yandex.ru:993, SMTP smtp.yandex.ru:465 (SSL).
+        </div>
+    {% endif %}
+</section>
+{% endif %}
+{% endfor %}
+
+{% for site in sites %}
+<section class="infra-section" id="infra-site{% if not forloop.first %}-{{ site.id }}{% endif %}">
+    <div class="infra-section-head">
+        <h2>Сайт: сроки и состояние</h2>
+        <span class="infra-spacer"></span>
+        {% if site.checked_age %}<span class="infra-section-note">проверка {{ site.checked_age }} назад · Zabbix</span>{% endif %}
+    </div>
+    <div class="infra-rows">
+        <div class="infra-row">
+            <span class="infra-row-main">
+                <a class="mono" href="https://{{ site.domain }}/" target="_blank" rel="noopener">{{ site.domain }}</a>
+                <span class="infra-sub">доступность</span>
+            </span>
+            {% if site.availability == "up" %}
+                <span class="infra-state infra-state-ok">доступен{% if site.response_ms %} · {{ site.response_ms }} мс{% endif %}</span>
+            {% elif site.availability == "down" %}
+                <span class="infra-state infra-state-bad">недоступен{% if site.http_code %} · код {{ site.http_code }}{% endif %}</span>
+            {% else %}
+                <span class="infra-sub">нет данных мониторинга</span>
+            {% endif %}
+        </div>
+        <div class="infra-row">
+            <span class="infra-row-main">Сертификат HTTPS</span>
+            {% if site.cert_days is None %}
+                <span class="infra-sub">нет данных</span>
+            {% elif site.cert_days < 7 %}
+                <span class="infra-state infra-state-bad">истекает через {{ site.cert_days }} дн.</span>
+            {% elif site.cert_days < 21 %}
+                <span class="infra-state infra-state-warn">ещё {{ site.cert_days }} дн. (продлевается автоматически)</span>
+            {% else %}
+                <span class="infra-state infra-state-ok">действует ещё {{ site.cert_days }} дн.</span>
+            {% endif %}
+        </div>
+        {% if site.content_ok is not None or site.files_ok is not None %}
+            <div class="infra-row">
+                <span class="infra-row-main">Целостность сайта</span>
+                {% if site.content_ok is False or site.files_ok is False or site.dns_ok is False %}
+                    <span class="infra-state infra-state-bad">есть изменения — инженер ССОД проверяет</span>
+                {% else %}
+                    <span class="infra-state infra-state-ok">совпадает с выложенным</span>
+                {% endif %}
+            </div>
+        {% endif %}
+        {% include "accounts/_paid_row.html" with label="Оплата хостинга" until=site.hosting_paid_until days=site.hosting_days %}
+        {% include "accounts/_paid_row.html" with label="Регистрация домена" until=site.domain_paid_until days=site.domain_days %}
+        {% for account in accounts %}
+            {% if account.kind == "cloud_account" and account.paid_until %}
+                {% include "accounts/_paid_row.html" with label="Почта Яндекс 360" until=account.paid_until days=account.paid_days %}
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% if site.hosting_provider %}
+        <div class="infra-panel-foot infra-sub">
+            Хостинг: {{ site.hosting_provider }}{% if site.hosting_plan %} · {{ site.hosting_plan|truncatechars:90 }}{% endif %}
+        </div>
+    {% endif %}
+</section>
+{% endfor %}
+
+{% if accounts %}
+<script>
+(function () {
+    document.querySelectorAll('[data-cred]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var row = btn.closest('.cred-row');
+            var value = row.querySelector('.cred-secret');
+            if (btn.dataset.cred === 'show') {
+                var shown = value.dataset.shown === '1';
+                value.textContent = shown ? '••••••••••' : value.dataset.secret;
+                value.dataset.shown = shown ? '0' : '1';
+                btn.textContent = shown ? 'показать' : 'скрыть';
+            } else {
+                var text = value.dataset.secret || value.textContent;
+                var done = function () { btn.textContent = 'скопировано'; setTimeout(function () { btn.textContent = 'копировать'; }, 1500); };
+                if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done); }
+            }
+        });
+    });
+})();
+</script>
+{% endif %}

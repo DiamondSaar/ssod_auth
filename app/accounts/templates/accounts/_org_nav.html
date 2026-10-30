@@ -28,6 +28,7 @@ show_anchors — показывать ли якоря страницы мони�
         <a href="#infra-equipment" class="is-current">Оборудование</a>
         <a href="#infra-backups">Резервные копии</a>
         <a href="#infra-staff">Сотрудники</a>
+        {% if accounts or sites %}<a href="#infra-registrar">Сайт и доступы</a>{% endif %}
         <a href="#infra-net-domains">Сеть и домены</a>
         <a href="#infra-logins">Попытки входа</a>
         <a href="#infra-problems">Проблемы</a>
@@ -40,7 +41,7 @@ show_anchors — показывать ли якоря страницы мони�
             {{ request.user.organization.name|first|default:"О" }}
         </div>
         <div class="infra-whoami-text">
-            <div class="infra-whoami-name">
+            <div class="infra-whoami-name" title="{{ request.user.organization.name }}">
                 {{ request.user.organization.name|default:request.user.username }}
             </div>
             <div class="infra-whoami-role">

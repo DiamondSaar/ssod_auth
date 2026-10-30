@@ -1,0 +1,17 @@
+{% comment %}Строка учётных данных: label + значение; secret — скрыт по умолчанию, кнопки «показать»/«копировать».
+mail=True — label это адрес ящика (моноширинным).{% endcomment %}
+<div class="infra-row cred-row">
+    <span class="infra-row-main{% if mail %} mono{% endif %}">{{ label }}</span>
+    {% if secret %}
+        <span class="cred-value">
+            <span class="cred-secret mono" data-secret="{{ secret }}">••••••••••</span>
+            <button type="button" class="cred-btn" data-cred="show">показать</button>
+            <button type="button" class="cred-btn" data-cred="copy">копировать</button>
+        </span>
+    {% else %}
+        <span class="cred-value">
+            <span class="cred-secret mono" data-secret="{{ value }}">{{ value|default:"—" }}</span>
+            {% if value %}<button type="button" class="cred-btn" data-cred="copy">копировать</button>{% endif %}
+        </span>
+    {% endif %}
+</div>

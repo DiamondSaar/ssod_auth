@@ -49,6 +49,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import localtime
+from django.views.decorators.cache import never_cache
 
 
 import hashlib
@@ -373,6 +374,7 @@ def _decorate_logins(logins):
     }
 
 
+@never_cache
 @login_required
 def infrastructure(request):
     """
@@ -427,8 +429,29 @@ def infrastructure(request):
             "backup_groups": _group_backups((summary or {}).get("backups") or []),
             "auth_points": (summary or {}).get("auth_points") or [],
             "logins": _decorate_logins((summary or {}).get("logins") or {}),
+            "sites": (summary or {}).get("sites") or [],
+            "accounts": _merge_credentials(summary),
         },
     )
+
+
+def _merge_credentials(summary):
+    """Кабинеты внешних сервисов (регистратор, облачная почта) вместе с их
+    логинами и паролями. Пароли Dominex присылает только админу ЛК юрлица и
+    отдельным блоком credentials (мимо своего кэша сводки) — здесь их лишь
+    раскладываем по кабинетам, чтобы шаблону не искать по ключу."""
+    credentials = (summary or {}).get("credentials") or {}
+    accounts = []
+    for account in (summary or {}).get("accounts") or []:
+        secret = credentials.get(str(account.get("id"))) or {}
+        accounts.append(dict(
+            account,
+            credentials=secret.get("credentials") or [],
+            mailbox_credentials=secret.get("mailboxes") or [],
+            ssh=secret.get("ssh") or [],
+            has_secrets=bool(credentials),
+        ))
+    return accounts
 
 
 # Почтовые системы ССОД. Список короткий и меняется редко, поэтому живёт

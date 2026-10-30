@@ -1134,3 +1134,34 @@
     text-align: right;
     overflow-wrap: anywhere;
 }
+
+/* Колонка переходов: элементы сетки по умолчанию растягиваются по содержимому,
+   и длинное название организации (nowrap) выталкивало блок «кто вошёл» за колонку —
+   поверх соседних карточек. min-width: 0 возвращает обрезку многоточием (30.10.2026). */
+.infra-nav > * { min-width: 0; }
+.infra-whoami { min-width: 0; max-width: 100%; }
+
+/* Учётные данные кабинетов (регистратор, облачная почта) и сроки оплаты */
+.cred-row { align-items: center; }
+.cred-value {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: flex-end;
+    min-width: 0;
+}
+.cred-secret { overflow-wrap: anywhere; }
+.cred-btn {
+    font: inherit;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--infra-border-inner);
+    background: transparent;
+    color: var(--infra-muted);
+    cursor: pointer;
+}
+.cred-btn:hover { color: #e8eef7; border-color: var(--infra-blue); }
+.cred-wrap { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
+

@@ -52,6 +52,7 @@
         <a href="#infra-equipment" class="is-current">Оборудование</a>
         <a href="#infra-backups">Резервные копии</a>
         <a href="#infra-staff">Сотрудники</a>
+        {% if accounts or sites %}<a href="#infra-registrar">Сайт и доступы</a>{% endif %}
         <a href="#infra-net-domains">Сеть и домены</a>
         <a href="#infra-logins">Попытки входа</a>
         <a href="#infra-problems">Проблемы</a>
@@ -428,6 +429,8 @@
                 </div>
             {% endif %}
         </section>
+
+        {% include "accounts/_infrastructure_services.html" %}
 
         {% comment %}
         Сеть и домены — две карточки в ряд, как в макете, а не двумя
