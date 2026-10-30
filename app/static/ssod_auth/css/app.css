@@ -558,7 +558,7 @@ textarea:focus {
 }
 .vox-chat-launcher[hidden] { display: none; }
 .vox-chat-launcher:hover { border-color: #f39a1e; }
-.vox-chat-emblem { width: 44px; height: 44px; flex: none; }
+.vox-chat-emblem { width: 52px; height: 52px; flex: none; margin: -6px 0 -6px -4px; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)); }
 @media (max-width: 600px) {
     .vox-chat-label { display: none; }
     .vox-chat-launcher { padding: 6px; right: 14px; bottom: 14px; }
