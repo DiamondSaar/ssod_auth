@@ -21,6 +21,8 @@
     --infra-orange: #ff9500;
     --infra-green: #6ee7a0;
     --infra-red: #ff6b5a;
+    /* Ссылки на тёмном фоне: браузерный синий и фиолетовый «посещённой» не видны (30.10) */
+    --infra-link: #7dd3fc;
     --infra-border: rgba(255, 255, 255, 0.10);
     --infra-border-inner: rgba(255, 255, 255, 0.06);
 
@@ -1165,3 +1167,19 @@
 .cred-btn:hover { color: #e8eef7; border-color: var(--infra-blue); }
 .cred-wrap { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 4px; }
 
+
+/* Ссылки в содержимом ЛК (сайт, почта, кабинеты регистратора/хостинга):
+   голубые в любом состоянии, включая посещённые. Ссылки со своим классом
+   (навигация, кнопки, хлебные крошки) не трогаются - кроме адресов .mono. */
+.infra-page a:not([class]),
+.infra-page a:not([class]):visited,
+.infra-page a.mono,
+.infra-page a.mono:visited {
+    color: var(--infra-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.infra-page a:not([class]):hover,
+.infra-page a.mono:hover {
+    color: #bae6fd;
+}
