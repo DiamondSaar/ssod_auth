@@ -34,12 +34,9 @@
         {% endfor %}
     </div>
     {% if account.ssh %}
-        <div class="infra-panel-foot">
-            <div class="infra-fact-label">Доступ к хостингу по SSH — только по ключам (открытые отпечатки)</div>
-            {% for entry in account.ssh %}
-                <div class="mono infra-sub cred-wrap">{{ entry.address }}</div>
-                <div class="infra-sub cred-wrap">{{ entry.who }}</div>
-            {% endfor %}
+        <div class="infra-panel-foot infra-sub">
+            Доступ к хостингу — только у администратора ССОД, вход с двухфакторной защитой
+            через аппаратный токен.
         </div>
     {% endif %}
 </section>
