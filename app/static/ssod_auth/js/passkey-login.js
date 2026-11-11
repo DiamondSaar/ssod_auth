@@ -129,7 +129,15 @@ async function loginWithPasskey() {
 
     } catch (error) {
         console.error(error);
-        statusBox.textContent = error.message || "Ошибка входа через passkey.";
+        // На Android браузеры работают с ключами через сервисы Google.
+        // Без них (Huawei и др.) браузер отвечает «not implemented» /
+        // NotSupportedError — объясняем человеку, а не показываем это.
+        const unsupported =
+            error.name === "NotSupportedError" || /not\s*implemented/i.test(error.message || "");
+        statusBox.textContent = unsupported
+            ? "Этот браузер не умеет работать с аппаратными ключами. На телефонах без сервисов Google " +
+              "(например, Huawei) браузеры ключи не поддерживают — войдите с компьютера или с другого телефона."
+            : error.message || "Ошибка входа через passkey.";
     } finally {
         button.disabled = false;
     }
