@@ -166,6 +166,9 @@ def api_confirm_options(request, token):
 
     # Вход уже подтверждён паролем — от ключа нужно только касание.
     options, state = AppKeyHelper(request).authenticate_begin(user=flow.user, require_user_verification=False)
+    # Библиотека пишет «preferred», а с ним ключ с заданным PIN требует PIN
+    # (yubikit: PinRequiredClientError). Здесь нужно только касание.
+    options["userVerification"] = "discouraged"
     flow.state = state
     flow.save(update_fields=["state"])
     return JsonResponse(
