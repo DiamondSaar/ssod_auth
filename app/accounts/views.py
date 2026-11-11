@@ -1,7 +1,6 @@
 import base64
 import io
 import logging
-import uuid as uuid_lib
 import json
 import os
 import subprocess
@@ -9,7 +8,6 @@ import sys
 import tempfile
 from urllib.parse import urlencode
 
-import jwt
 import qrcode
 import requests
 from django.conf import settings
@@ -62,9 +60,8 @@ from accounts.models import SSODAccessKey
 
 from django_otp_webauthn.models import WebAuthnCredential
 
-from accounts import second_factor
+from accounts import second_factor, sso_tickets
 
-SSO_TICKET_LIFETIME_SECONDS = 60
 
 @login_required
 def account_home(request):
@@ -762,12 +759,7 @@ def sso_authorize(request, product_code):
     if product is None:
         raise Http404("Продукт не найден или не поддерживает SSO-тикет.")
 
-    is_allowed = UserProductAccess.objects.filter(
-        user=request.user,
-        product=product,
-        status=UserProductAccess.Status.ACTIVE,
-    ).exists()
-    if not is_allowed:
+    if not sso_tickets.user_has_product(request.user, product):
         messages.error(request, "Нет доступа к этому продукту.")
         return redirect("accounts:account_products")
 
@@ -775,27 +767,7 @@ def sso_authorize(request, product_code):
     if not next_path.startswith("/"):
         next_path = ""
 
-    now = timezone.now()
-    jti = str(uuid_lib.uuid4())
-    payload = {
-        "sub": request.user.username,
-        "aud": product.code,
-        "iat": int(now.timestamp()),
-        "exp": int(now.timestamp()) + SSO_TICKET_LIFETIME_SECONDS,
-        "jti": jti,
-        # Чем подтверждён вход (pwd — пароль, hwk — аппаратный ключ):
-        # продукт сам решает, пускать ли админа без ключа.
-        "amr": second_factor.login_amr(request),
-    }
-    ticket = jwt.encode(payload, settings.SSO_TICKET_SECRET, algorithm="HS256")
-
-    AuthEvent.objects.create(
-        user=request.user,
-        event_type=AuthEvent.EventType.ACCESS_GRANTED,
-        ip_address=request.META.get("REMOTE_ADDR"),
-        user_agent=request.META.get("HTTP_USER_AGENT", ""),
-        details={"sso_ticket_issued": True, "product": product.code, "jti": jti, "exp": payload["exp"]},
-    )
+    ticket = sso_tickets.issue_ticket(request.user, product, second_factor.login_amr(request), request)
 
     query = {"ticket": ticket}
     if next_path:

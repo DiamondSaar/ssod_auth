@@ -252,6 +252,14 @@ OTP_WEBAUTHN_ALLOW_PASSWORDLESS_LOGIN = True
 # strict — обязателен для всех администраторов. Решение владельца 11.11.2026.
 ADMIN_SECOND_FACTOR = env("ADMIN_SECOND_FACTOR", default="soft")
 
+# Подпись ключом из нашего приложения Dominex (accounts/app_key.py):
+# источник = отпечаток ключа подписи APK. Ключ подписи — vox-build
+# /srv/dominex-mobile/secrets; сменится ключ — сменится и эта строка.
+APP_KEY_ALLOWED_ORIGINS = env.list(
+    "APP_KEY_ALLOWED_ORIGINS",
+    default=["android:apk-key-hash:lx_YCY4YCeg_Djb2VgWLCC0T3w3bRLs9t15q3qPeFOg"],
+)
+
 
 LOGIN_URL = "/account/login/"
 LOGIN_REDIRECT_URL = "/account/"

@@ -1461,3 +1461,65 @@ class DeployJob(TimeStampedModel):
         self.log = (self.log or "") + stamped
         self.save(update_fields=["log", "updated_at"])
 
+
+
+class AppKeyFlow(models.Model):
+    """
+    Одноразовый запрос подписи аппаратным ключом из нашего мобильного
+    приложения (accounts/app_key.py).
+
+    Зачем: на телефонах без сервисов Google (Huawei) браузер не работает
+    с ключами вообще. Приложение Dominex обращается к YubiKey по NFC само
+    и подписывает вызов сервера:
+    - login   — вход в приложение ключом (без пароля, с PIN ключа);
+    - confirm — подтверждение входа администратора, начатого в браузере
+                на этом же телефоне: браузер ждёт, приложение подписывает.
+    """
+
+    class Purpose(models.TextChoices):
+        LOGIN = "login", "Вход в приложение"
+        CONFIRM = "confirm", "Подтверждение входа в браузере"
+
+    token = models.CharField(max_length=64, unique=True, verbose_name="Токен запроса")
+    purpose = models.CharField(max_length=16, choices=Purpose.choices, verbose_name="Назначение")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="app_key_flows",
+        verbose_name="Пользователь",
+    )
+    product = models.ForeignKey(
+        "Product",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        verbose_name="Продукт (билет при входе)",
+    )
+    state = models.JSONField(default=dict, blank=True, verbose_name="Состояние проверки")
+    browser_session_hash = models.CharField(max_length=64, blank=True, verbose_name="Сессия браузера (хеш)")
+    browser_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP браузера")
+    browser_agent = models.TextField(blank=True, verbose_name="Браузер")
+    device = models.ForeignKey(
+        "django_otp_webauthn.WebAuthnCredential",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Ключ",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
+    expires_at = models.DateTimeField(verbose_name="Истекает")
+    completed_at = models.DateTimeField(null=True, blank=True, verbose_name="Подписан ключом")
+    consumed_at = models.DateTimeField(null=True, blank=True, verbose_name="Использован")
+
+    class Meta:
+        verbose_name = "Запрос подписи ключом из приложения"
+        verbose_name_plural = "Запросы подписи ключом из приложения"
+
+    def __str__(self):
+        return f"{self.purpose} {self.user or '—'} {self.created_at:%d.%m %H:%M}"
+
+    @property
+    def is_expired(self):
+        return timezone.now() >= self.expires_at

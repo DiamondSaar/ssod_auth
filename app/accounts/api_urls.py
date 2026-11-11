@@ -1,11 +1,15 @@
 from django.urls import path
 
-from . import api
+from . import api, app_key
 
 
 app_name = "accounts_api"
 
 urlpatterns = [
+    # Подпись аппаратным ключом из приложения Dominex (accounts/app_key.py).
+    path("app-key/login/", app_key.api_login_begin, name="app_key_login"),
+    path("app-key/<str:token>/", app_key.api_confirm_options, name="app_key_confirm_options"),
+    path("app-key/<str:token>/complete/", app_key.api_complete, name="app_key_complete"),
     path("keys/verify/", api.verify_access_key, name="verify_access_key"),
     path("service-token/", api.issue_service_token, name="issue_service_token"),
     path("products/update/", api.admin_update_product, name="admin_update_product"),

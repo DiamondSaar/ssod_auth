@@ -24,7 +24,7 @@ from accounts.services.dominex_client import fetch_user_projection
 from accounts.services.dominex_sync import apply_projection
 
 # Короткоживущий service-токен для межсервисных (машина-машина) вызовов -
-# тот же принцип, что и SSO_TICKET_LIFETIME_SECONDS в views.py::sso_authorize
+# тот же принцип, что и SSO_TICKET_LIFETIME_SECONDS в sso_tickets.py
 # (тоже PyJWT/HS256), но отдельный секрет (M2M_TOKEN_SECRET) и без jti/
 # anti-replay - это bearer-токен для повторных API-вызовов в течение
 # своего TTL, а не одноразовая ссылка-редирект.

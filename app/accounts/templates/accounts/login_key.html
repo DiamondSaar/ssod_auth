@@ -32,10 +32,24 @@
 
     <div id="passkey-login-status" class="passkey-status"></div>
 
+    {% comment %}
+    Телефоны без сервисов Google (Huawei): браузер с ключом не работает,
+    подписывает приложение Dominex по NFC — accounts/app_key.py.
+    {% endcomment %}
+    <div class="form-actions">
+        <button class="button secondary" type="button" id="app-key-button"
+                data-start-url="{% url 'accounts:login_key_app_start' %}"
+                data-next="{{ next }}">
+            Подтвердить через приложение Dominex
+        </button>
+    </div>
+    <div id="app-key-status" class="passkey-status"></div>
+
     <p class="login-hint-org">
         Ключ потерян или не срабатывает — войдите запасным ключом или обратитесь к суперадминистратору.
     </p>
 
     <script src="{% static 'ssod_auth/js/passkey-login.js' %}"></script>
+    <script src="{% static 'ssod_auth/js/login-key-app.js' %}"></script>
 </section>
 {% endblock %}

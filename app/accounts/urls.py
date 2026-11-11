@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from . import views
+from . import app_key, views
 
 
 app_name = "accounts"
@@ -17,6 +17,8 @@ urlpatterns = [
     path("security/keys/<int:credential_id>/delete/", views.security_key_delete, name="security_key_delete"),
     # Второй шаг входа администратора — подтверждение ключом.
     path("login/key/", views.login_key, name="login_key"),
+    path("login/key/app/", app_key.browser_confirm_start, name="login_key_app_start"),
+    path("login/key/app/<str:token>/", app_key.browser_confirm_status, name="login_key_app_status"),
     path(
         "products/",
         views.account_products,
