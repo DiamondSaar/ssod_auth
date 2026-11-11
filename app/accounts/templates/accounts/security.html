@@ -19,13 +19,35 @@ account-page
     </div>
 
     <h1 class="admin-title">
-        Passkey и устройства входа
+        Ключи входа
     </h1>
 
     <p class="admin-subtitle">
-        Passkey позволяет входить без пароля с помощью Windows Hello,
-        PIN-кода устройства, биометрии или аппаратного ключа.
+        Аппаратный ключ (YubiKey) или passkey: подтверждает вход после пароля
+        или заменяет пароль, если на ключе задан PIN.
     </p>
+
+    {% if messages %}
+        <div class="page-messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if key_required %}
+        <div class="key-notice">
+            {% if confirmed_key_count == 0 %}
+                Для вашей учётной записи вход с ключом обязателен. Добавьте ключ — лучше сразу два:
+                основной и запасной.
+            {% elif confirmed_key_count == 1 %}
+                Для вашей учётной записи вход с ключом обязателен, а ключ зарегистрирован один.
+                Потеряете его — не войдёте. Добавьте запасной.
+            {% else %}
+                Для вашей учётной записи вход с ключом обязателен. Ключей зарегистрировано: {{ confirmed_key_count }}.
+            {% endif %}
+        </div>
+    {% endif %}
 
     <div class="account-actions-row">
         <button
@@ -33,7 +55,7 @@ account-page
             type="button"
             id="passkey-register-button"
         >
-            Добавить passkey
+            Добавить ключ
         </button>
 
         <a class="button secondary" href="{% url 'accounts:access_key_list' %}">
@@ -52,10 +74,11 @@ account-page
             <thead>
                 <tr>
                     <th>Название</th>
-                    <th>Подтвержден</th>
-                    <th>Создан</th>
-                    <th>Последнее использование</th>
-                    <th>Discoverable</th>
+                    <th>Подтверждён</th>
+                    <th>Добавлен</th>
+                    <th>Последний вход</th>
+                    <th>Вход без пароля</th>
+                    <th></th>
                 </tr>
             </thead>
 
@@ -63,7 +86,7 @@ account-page
                 {% for credential in credentials %}
                     <tr>
                         <td>
-                            {{ credential.name|default:"Passkey" }}
+                            {{ credential.name|default:"Ключ" }}
                         </td>
 
                         <td>
@@ -93,11 +116,28 @@ account-page
                                 Нет
                             {% endif %}
                         </td>
+
+                        <td>
+                            {% if can_manage_keys %}
+                                <div class="key-actions">
+                                    <form method="post" action="{% url 'accounts:security_key_rename' credential.pk %}">
+                                        {% csrf_token %}
+                                        <input type="text" name="name" maxlength="64" placeholder="Новое имя">
+                                        <button class="button secondary small" type="submit">Переименовать</button>
+                                    </form>
+                                    <form method="post" action="{% url 'accounts:security_key_delete' credential.pk %}"
+                                          onsubmit="return confirm('Удалить ключ «{{ credential.name|default:"Ключ"|escapejs }}»?');">
+                                        {% csrf_token %}
+                                        <button class="button secondary small" type="submit">Удалить</button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5">
-                            Passkey пока не добавлены.
+                        <td colspan="6">
+                            Ключи пока не добавлены.
                         </td>
                     </tr>
                 {% endfor %}

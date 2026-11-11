@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+Подтверждение ключом — ССОД Auth Center
+{% endblock %}
+
+{% block content %}
+<section class="login-card">
+
+    <div class="hero-badge">
+        Вход администратора
+    </div>
+
+    <h1 class="login-title">
+        Подтвердите вход ключом
+    </h1>
+
+    <p class="login-subtitle">
+        {{ request.user.get_username }}, для администраторов вход подтверждается аппаратным ключом.
+        Вставьте ключ или приложите его к телефону и коснитесь его.
+    </p>
+
+    <div class="form-actions">
+        <button class="button primary" type="button" id="passkey-login-button" data-autostart="1">
+            Подтвердить ключом
+        </button>
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button class="button secondary" type="submit">Выйти</button>
+        </form>
+    </div>
+
+    <div id="passkey-login-status" class="passkey-status"></div>
+
+    <p class="login-hint-org">
+        Ключ потерян или не срабатывает — войдите запасным ключом или обратитесь к суперадминистратору.
+    </p>
+
+    <script src="{% static 'ssod_auth/js/passkey-login.js' %}"></script>
+</section>
+{% endblock %}

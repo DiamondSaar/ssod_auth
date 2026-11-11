@@ -32,6 +32,14 @@
         учётную запись — откроется кабинет организации.
     </p>
 
+    {% if messages %}
+        <div class="page-messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     {% if form.errors %}
         <div class="form-errors">
             Неверный логин или пароль.

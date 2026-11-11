@@ -195,6 +195,15 @@ class CustomUser(AbstractUser):
         verbose_name="Класс доступа",
     )
 
+    # Роль пользователя в Dominex (user/admin/superadmin) — приходит с
+    # проекцией при каждом входе. По ней решается, обязан ли человек
+    # входить с аппаратным ключом (accounts/second_factor.py).
+    dominex_role = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Роль в Dominex",
+    )
+
     must_change_password = models.BooleanField(
         default=True,
         verbose_name="Требуется смена пароля",

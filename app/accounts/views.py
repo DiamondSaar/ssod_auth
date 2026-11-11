@@ -50,6 +50,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import localtime
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 
 
 import hashlib
@@ -60,6 +61,8 @@ from django.utils import timezone
 from accounts.models import SSODAccessKey
 
 from django_otp_webauthn.models import WebAuthnCredential
+
+from accounts import second_factor
 
 SSO_TICKET_LIFETIME_SECONDS = 60
 
@@ -234,8 +237,84 @@ def security(request):
         {
             "credentials": credentials,
             "oracle_status": oracle_status,
+            "key_required": second_factor.requires_key(request.user),
+            "confirmed_key_count": sum(1 for c in credentials if c.confirmed),
+            "can_manage_keys": _can_manage_keys(request),
         },
     )
+
+
+def _can_manage_keys(request):
+    """Переименовать или удалить ключ можно из сессии, подтверждённой
+    ключом, — либо если ключей ещё нет. Иначе тот, кто узнал пароль,
+    снял бы ключи и вошёл бы дальше одним паролем."""
+    if second_factor.is_key_verified(request):
+        return True
+    return not second_factor.user_keys(request.user).exists()
+
+
+@login_required
+@require_POST
+def security_key_rename(request, credential_id):
+    credential = get_object_or_404(WebAuthnCredential, pk=credential_id, user=request.user)
+    if not _can_manage_keys(request):
+        messages.error(request, "Сначала подтвердите вход ключом.")
+        return redirect("accounts:security")
+
+    name = (request.POST.get("name") or "").strip()[:64]
+    if name:
+        credential.name = name
+        credential.save(update_fields=["name"])
+        messages.success(request, f"Ключ переименован: «{name}».")
+    return redirect("accounts:security")
+
+
+@login_required
+@require_POST
+def security_key_delete(request, credential_id):
+    credential = get_object_or_404(WebAuthnCredential, pk=credential_id, user=request.user)
+    if not _can_manage_keys(request):
+        messages.error(request, "Сначала подтвердите вход ключом.")
+        return redirect("accounts:security")
+
+    remaining = second_factor.user_keys(request.user).exclude(pk=credential.pk).count()
+    if second_factor.requires_key(request.user) and credential.confirmed and remaining == 0:
+        # Администратор без ключа не войдёт — последний ключ не снимаем.
+        # Сначала добавить новый, потом убрать старый.
+        messages.error(request, "Это последний ключ: сначала добавьте другой, потом удаляйте этот.")
+        return redirect("accounts:security")
+
+    name = credential.name or "Ключ"
+    credential.delete()
+    AuthEvent.objects.create(
+        user=request.user,
+        event_type=AuthEvent.EventType.ACCESS_GRANTED,
+        ip_address=request.META.get("REMOTE_ADDR"),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+        details={"webauthn_credential_deleted": name},
+    )
+    messages.success(request, f"Ключ «{name}» удалён.")
+    return redirect("accounts:security")
+
+
+@login_required
+@never_cache
+def login_key(request):
+    """
+    Второй шаг входа администратора: подтверждение аппаратным ключом.
+    Сюда приводит AdminSecondFactorMiddleware. Сама проверка — штатные
+    /webauthn/authentication/begin|complete/ из django_otp_webauthn:
+    для вошедшего паролем они предлагают только его ключи и после
+    успеха отмечают сессию подтверждённой (request.user.is_verified()).
+    """
+    next_path = request.GET.get("next") or ""
+    if not next_path.startswith("/") or next_path.startswith("//"):
+        next_path = ""
+
+    if second_factor.is_key_verified(request) or not second_factor.requires_key(request.user):
+        return redirect(next_path or "accounts:account_home")
+
+    return render(request, "accounts/login_key.html", {"next": next_path})
 
 @login_required
 def account_products(request):
@@ -704,6 +783,9 @@ def sso_authorize(request, product_code):
         "iat": int(now.timestamp()),
         "exp": int(now.timestamp()) + SSO_TICKET_LIFETIME_SECONDS,
         "jti": jti,
+        # Чем подтверждён вход (pwd — пароль, hwk — аппаратный ключ):
+        # продукт сам решает, пускать ли админа без ключа.
+        "amr": second_factor.login_amr(request),
     }
     ticket = jwt.encode(payload, settings.SSO_TICKET_SECRET, algorithm="HS256")
 

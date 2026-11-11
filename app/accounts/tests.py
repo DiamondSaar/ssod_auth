@@ -1,10 +1,14 @@
+import hashlib
 import re
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
+import jwt
 from django.contrib.auth import get_user_model
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
+from django_otp import DEVICE_ID_SESSION_KEY
 
-from accounts.models import Organization, Product, UserProductAccess
+from accounts.models import Organization, Product, ProductRole, UserProductAccess
 from accounts.services.dominex_sync import apply_projection
 
 
@@ -202,3 +206,163 @@ class MailSystemsTests(TestCase):
 
         self.client.force_login(self.theirs)
         self.assertNotContains(self.client.get("/account/"), "Почтовые системы")
+
+
+def _add_key(user, name="YubiKey"):
+    from django_otp_webauthn.models import WebAuthnCredential
+
+    seed = f"{user.username}-{name}".encode()
+    return WebAuthnCredential.objects.create(
+        user=user,
+        name=name,
+        confirmed=True,
+        credential_id=seed,
+        public_key=b"test-public-key",
+        aaguid="00000000-0000-0000-0000-000000000000",
+        credential_id_sha256=hashlib.sha256(seed).hexdigest(),
+    )
+
+
+@override_settings(ADMIN_SECOND_FACTOR="soft")
+class AdminSecondFactorTests(TestCase):
+    """
+    Решение владельца 11.11.2026: админский доступ всегда подтверждается
+    аппаратным ключом, пользователи без админских прав входят паролем.
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin = User.objects.create_user(username="adm", password="x")
+        self.admin.dominex_role = "superadmin"
+        self.admin.must_change_password = False
+        self.admin.save()
+
+        self.person = User.objects.create_user(username="person", password="x")
+        self.person.dominex_role = "user"
+        self.person.must_change_password = False
+        self.person.save()
+
+    def _verify_with(self, key):
+        # То же, что делает django_otp.login() после проверки ключа.
+        session = self.client.session
+        session[DEVICE_ID_SESSION_KEY] = key.persistent_id
+        session.save()
+
+    def test_role_comes_from_projection(self):
+        projection = _projection()
+        projection["role"] = "admin"
+
+        apply_projection(self.person, projection)
+
+        self.person.refresh_from_db()
+        self.assertEqual(self.person.dominex_role, "admin")
+
+    def test_user_without_admin_rights_is_not_asked(self):
+        _add_key(self.person)
+        self.client.force_login(self.person)
+
+        self.assertEqual(self.client.get("/account/products/").status_code, 200)
+
+    def test_admin_with_key_must_confirm_it(self):
+        _add_key(self.admin)
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/account/products/")
+
+        self.assertRedirects(
+            response, "/account/login/key/?next=%2Faccount%2Fproducts%2F", fetch_redirect_response=False
+        )
+        self.assertEqual(self.client.get("/account/login/key/").status_code, 200)
+
+    def test_admin_confirmed_by_key_passes(self):
+        key = _add_key(self.admin)
+        self.client.force_login(self.admin)
+        self._verify_with(key)
+
+        self.assertEqual(self.client.get("/account/products/").status_code, 200)
+
+    def test_staff_counts_as_admin(self):
+        self.person.is_staff = True
+        self.person.save()
+        _add_key(self.person)
+        self.client.force_login(self.person)
+
+        self.assertEqual(self.client.get("/account/products/").status_code, 302)
+
+    def test_soft_mode_admin_without_key_is_asked_to_add_one(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/account/products/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Добавьте ключ")
+
+    @override_settings(ADMIN_SECOND_FACTOR="strict")
+    def test_strict_mode_admin_without_key_is_logged_out(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/account/products/")
+
+        self.assertRedirects(response, "/account/login/", fetch_redirect_response=False)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    @override_settings(ADMIN_SECOND_FACTOR="off")
+    def test_off_mode_skips_the_check(self):
+        _add_key(self.admin)
+        self.client.force_login(self.admin)
+
+        self.assertEqual(self.client.get("/account/products/").status_code, 200)
+
+    def test_last_key_of_admin_cannot_be_deleted(self):
+        key = _add_key(self.admin)
+        self.client.force_login(self.admin)
+        self._verify_with(key)
+
+        self.client.post(f"/account/security/keys/{key.pk}/delete/")
+
+        self.assertTrue(type(key).objects.filter(pk=key.pk).exists())
+
+    def test_spare_key_can_be_deleted_from_confirmed_session(self):
+        key = _add_key(self.admin, "Основной")
+        spare = _add_key(self.admin, "Запасной")
+        self.client.force_login(self.admin)
+        self._verify_with(key)
+
+        self.client.post(f"/account/security/keys/{spare.pk}/delete/")
+
+        self.assertFalse(type(spare).objects.filter(pk=spare.pk).exists())
+
+    def test_keys_cannot_be_removed_by_password_alone(self):
+        # Пользователь без админских прав с ключом, вошедший паролем:
+        # узнавший пароль не должен снять ключ.
+        key = _add_key(self.person, "Основной")
+        _add_key(self.person, "Запасной")
+        self.client.force_login(self.person)
+
+        self.client.post(f"/account/security/keys/{key.pk}/delete/")
+
+        self.assertTrue(type(key).objects.filter(pk=key.pk).exists())
+
+    def _ticket_for(self, user, key=None):
+        product = Product.objects.create(code="dominex", name="Dominex", sso_enabled=True,
+                                         product_url="https://dominex.example")
+        organization = Organization.objects.create(name="ССОД-тест")
+        role = ProductRole.objects.create(product=product, code="r", name="r")
+        UserProductAccess.objects.create(user=user, product=product, organization=organization,
+                                         role=role, status=UserProductAccess.Status.ACTIVE)
+        self.client.force_login(user)
+        if key:
+            self._verify_with(key)
+
+        response = self.client.get("/account/sso/authorize/dominex/")
+        self.assertEqual(response.status_code, 302, response)
+        ticket = parse_qs(urlparse(response["Location"]).query)["ticket"][0]
+        return jwt.decode(ticket, options={"verify_signature": False})
+
+    def test_ticket_marks_key_confirmed_login(self):
+        key = _add_key(self.admin)
+
+        self.assertEqual(self._ticket_for(self.admin, key)["amr"], ["hwk"])
+
+    def test_ticket_marks_password_only_login(self):
+        self.assertEqual(self._ticket_for(self.person)["amr"], ["pwd"])

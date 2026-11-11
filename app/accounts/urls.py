@@ -13,6 +13,10 @@ urlpatterns = [
     path("keys/create/", views.access_key_create, name="access_key_create"),
     path("keys/<uuid:key_uuid>/revoke/", views.access_key_revoke, name="access_key_revoke"),
     path("security/", views.security, name="security"),
+    path("security/keys/<int:credential_id>/rename/", views.security_key_rename, name="security_key_rename"),
+    path("security/keys/<int:credential_id>/delete/", views.security_key_delete, name="security_key_delete"),
+    # Второй шаг входа администратора — подтверждение ключом.
+    path("login/key/", views.login_key, name="login_key"),
     path(
         "products/",
         views.account_products,

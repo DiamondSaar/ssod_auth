@@ -12,6 +12,13 @@
 </head>
 <body>
     <main class="{% block main_class %}auth-page{% endblock %}">
+         {% if second_factor_missing_key %}
+            <div class="key-notice">
+                Вы администратор — вход должен подтверждаться аппаратным ключом.
+                <a href="{% url 'accounts:security' %}">Добавьте ключ</a> (лучше два: основной и запасной).
+                Скоро без ключа вход администратора будет закрыт.
+            </div>
+         {% endif %}
          {% block content %}{% endblock %}
     </main>
 

@@ -49,3 +49,9 @@ def vox_chat(request):
             "department": getattr(settings, "VOX_CHAT_DEPARTMENT", "") or "",
         }
     }
+
+
+def second_factor_notice(request):
+    """Администратор без ключа в мягком режиме — просьба на каждой странице
+    (флаг ставит accounts.middleware.AdminSecondFactorMiddleware)."""
+    return {"second_factor_missing_key": getattr(request, "second_factor_missing_key", False)}

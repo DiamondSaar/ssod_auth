@@ -140,5 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (button) {
         button.addEventListener("click", loginWithPasskey);
+
+        // Страница подтверждения ключом после пароля сразу просит ключ.
+        // Если браузер требует нажатия (Safari) — останется кнопка.
+        if (button.dataset.autostart) {
+            loginWithPasskey();
+        }
     }
 });

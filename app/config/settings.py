@@ -79,6 +79,7 @@ MIDDLEWARE = [
     "accounts.middleware.OrganizationCabinetMiddleware",
     "django_otp.middleware.OTPMiddleware",
     'django.contrib.messages.middleware.MessageMiddleware',
+    "accounts.middleware.AdminSecondFactorMiddleware",
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -95,6 +96,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'accounts.context_processors.vox_chat',
+                'accounts.context_processors.second_factor_notice',
             ],
         },
     },
@@ -244,6 +246,11 @@ WEBAUTHN_ALLOWED_ORIGINS = [
 ]
 
 OTP_WEBAUTHN_ALLOW_PASSWORDLESS_LOGIN = True
+
+# Второй фактор для администраторов (accounts/second_factor.py):
+# off — аварийно выключен, soft — обязателен для тех, у кого ключ есть,
+# strict — обязателен для всех администраторов. Решение владельца 11.11.2026.
+ADMIN_SECOND_FACTOR = env("ADMIN_SECOND_FACTOR", default="soft")
 
 
 LOGIN_URL = "/account/login/"

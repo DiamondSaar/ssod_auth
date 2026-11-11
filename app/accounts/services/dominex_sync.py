@@ -28,6 +28,12 @@ def apply_projection(user, projection):
     if access_class:
         user.access_class = access_class
 
+    # Роль решает, обязателен ли ключ при входе — снятие админских прав
+    # в Dominex должно сниматься и здесь, поэтому пишем всегда, что пришло.
+    role = projection.get("role")
+    if role:
+        user.dominex_role = role
+
     position_name = projection.get("position")
     if position_name:
         position, _ = Position.objects.get_or_create(name=position_name)
